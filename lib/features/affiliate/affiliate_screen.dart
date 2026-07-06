@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
 import '../../app/theme.dart';
+import 'product_manager_screen.dart';
 
 class AffiliateScreen extends StatefulWidget {
   const AffiliateScreen({super.key});
@@ -15,10 +16,18 @@ class _AffiliateScreenState extends State<AffiliateScreen>
   late TabController _tabController;
   String _chartPeriod = 'semanal';
 
+  // Manual sales tracking
+  final List<Map<String, dynamic>> _manualSales = [
+    {'product': 'iPhone 15 Pro Max', 'amount': 6799.0, 'commission': 300.0, 'date': '06/07/2026'},
+    {'product': 'PS5 Slim Bundle', 'amount': 3199.0, 'commission': 140.0, 'date': '05/07/2026'},
+  ];
+  int _totalLinkClicks = 4821;
+  int _todayLinkClicks = 127;
+
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 5, vsync: this);
   }
 
   @override
@@ -48,14 +57,6 @@ class _AffiliateScreenState extends State<AffiliateScreen>
     _SaleRecord('Galaxy Tab S9', 'Amanda C.', 1699.0, 75.0, '03/07/2026 15:40', false),
   ];
 
-  final _payments = [
-    _PaymentRecord('R\$ 1.250,00', '01/07/2026', 'Pago', AppColors.savings),
-    _PaymentRecord('R\$ 890,00', '15/06/2026', 'Pago', AppColors.savings),
-    _PaymentRecord('R\$ 2.100,00', '01/06/2026', 'Pago', AppColors.savings),
-    _PaymentRecord('R\$ 450,00', '15/05/2026', 'Pago', AppColors.savings),
-    _PaymentRecord('R\$ 1.680,00', '01/05/2026', 'Pago', AppColors.savings),
-  ];
-
   final Map<String, List<double>> _chartData = {
     'diário': [120, 280, 190, 350, 420, 310, 490],
     'semanal': [890, 1240, 760, 1580, 920, 1350, 1100],
@@ -78,8 +79,9 @@ class _AffiliateScreenState extends State<AffiliateScreen>
           children: [
             _buildDashboard(),
             _buildSalesTab(),
-            _buildPaymentsTab(),
+            _buildLinksAndSalesTab(),
             _buildReportsTab(),
+            const ProductManagerScreen(),
           ],
         ),
       ),
@@ -192,7 +194,8 @@ class _AffiliateScreenState extends State<AffiliateScreen>
       delegate: _StickyTabBarDelegate(
         TabBar(
           controller: _tabController,
-          isScrollable: false,
+          isScrollable: true,
+          tabAlignment: TabAlignment.start,
           labelColor: const Color(0xFFD4AF37),
           unselectedLabelColor: AppColors.textMuted,
           labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
@@ -203,8 +206,9 @@ class _AffiliateScreenState extends State<AffiliateScreen>
           tabs: const [
             Tab(icon: Icon(Icons.dashboard_rounded, size: 18), text: 'Dashboard'),
             Tab(icon: Icon(Icons.receipt_long_rounded, size: 18), text: 'Vendas'),
-            Tab(icon: Icon(Icons.account_balance_wallet_rounded, size: 18), text: 'Pagamentos'),
+            Tab(icon: Icon(Icons.link_rounded, size: 18), text: 'Links & Vendas'),
             Tab(icon: Icon(Icons.bar_chart_rounded, size: 18), text: 'Relatórios'),
+            Tab(icon: Icon(Icons.inventory_2_rounded, size: 18), text: 'Produtos'),
           ],
         ),
       ),
@@ -223,6 +227,9 @@ class _AffiliateScreenState extends State<AffiliateScreen>
         children: [
           // KPI Cards
           _buildKPIGrid(currency),
+          const SizedBox(height: 20),
+          // Promote Button
+          _buildPromoteButton(),
           const SizedBox(height: 20),
           // Performance Chart
           _buildChartSection(),
@@ -470,6 +477,241 @@ class _AffiliateScreenState extends State<AffiliateScreen>
         ],
       ),
     ).animate().fadeIn(delay: 400.ms, duration: 400.ms);
+  }
+
+  Widget _buildPromoteButton() {
+    return GestureDetector(
+      onTap: () => _showBoostPlansDialog(),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF1A1508), Color(0xFF2A2010)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: const Color(0xFFD4AF37).withValues(alpha: 0.5),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFFD4AF37).withValues(alpha: 0.1),
+              blurRadius: 16,
+              spreadRadius: 2,
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFD4AF37), Color(0xFFC8922A)],
+                ),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: const Icon(Icons.rocket_launch_rounded, color: Color(0xFF1A1000), size: 24),
+            ),
+            const SizedBox(width: 14),
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Promover Produto',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w900,
+                      color: Color(0xFFD4AF37),
+                    ),
+                  ),
+                  SizedBox(height: 2),
+                  Text(
+                    'Destaque seu produto no topo da lista',
+                    style: TextStyle(fontSize: 12, color: Color(0xFF8A7A5A)),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.arrow_forward_ios_rounded, color: Color(0xFFD4AF37), size: 16),
+          ],
+        ),
+      ),
+    ).animate().fadeIn(delay: 300.ms, duration: 400.ms).slideY(begin: 0.1, end: 0);
+  }
+
+  void _showBoostPlansDialog() {
+    final plans = [
+      _BoostPlan('Básico', 'R\$ 29,90/mês', '7 dias em destaque', Icons.star_outline_rounded, const Color(0xFF10B981), [
+        '✅ Aparece antes dos não patrocinados',
+        '✅ Badge "Patrocinado" no card',
+        '✅ 200 cliques garantidos',
+      ]),
+      _BoostPlan('Pro', 'R\$ 59,90/mês', '15 dias em destaque', Icons.star_rounded, const Color(0xFF3B82F6), [
+        '✅ Tudo do Básico',
+        '✅ Badge azul "Destaque"',
+        '✅ 500 cliques garantidos',
+        '✅ Aparece no carrossel da home',
+      ]),
+      _BoostPlan('Premium', 'R\$ 99,90/mês', 'TOP #1 garantido', Icons.workspace_premium_rounded, const Color(0xFFD4AF37), [
+        '✅ Tudo do Pro',
+        '✅ Badge dourado TOP #1',
+        '✅ 1.000 cliques garantidos',
+        '✅ Prioridade máxima em Ofertas Relâmpago',
+        '✅ Notificação push para usuários',
+      ]),
+    ];
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => Container(
+        height: MediaQuery.of(context).size.height * 0.85,
+        decoration: const BoxDecoration(
+          color: Color(0xFF0F0F1A),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          children: [
+            const SizedBox(height: 12),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: const Color(0xFF8A7A5A),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 20),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20),
+              child: Column(
+                children: [
+                  Icon(Icons.rocket_launch_rounded, color: Color(0xFFD4AF37), size: 36),
+                  SizedBox(height: 10),
+                  Text(
+                    'Planos de Destaque',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                      color: Color(0xFFD4AF37),
+                    ),
+                  ),
+                  SizedBox(height: 6),
+                  Text(
+                    'Coloque seu produto na frente de todos!',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 13, color: Color(0xFF8A7A5A)),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemCount: plans.length,
+                itemBuilder: (context, i) {
+                  final plan = plans[i];
+                  final isPopular = i == 1;
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: isPopular
+                          ? plan.color.withValues(alpha: 0.1)
+                          : const Color(0xFF1A1A2E),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: plan.color.withValues(alpha: isPopular ? 0.6 : 0.3),
+                        width: isPopular ? 1.5 : 1,
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(plan.icon, color: plan.color, size: 22),
+                            const SizedBox(width: 8),
+                            Text(
+                              plan.name,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w900,
+                                color: plan.color,
+                              ),
+                            ),
+                            const Spacer(),
+                            if (isPopular)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: plan.color.withValues(alpha: 0.2),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: plan.color.withValues(alpha: 0.5)),
+                                ),
+                                child: Text(
+                                  '⭐ Popular',
+                                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: plan.color),
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(plan.subtitle, style: const TextStyle(fontSize: 12, color: Color(0xFF8A7A5A))),
+                        const SizedBox(height: 12),
+                        ...plan.features.map((f) => Padding(
+                          padding: const EdgeInsets.only(bottom: 4),
+                          child: Text(f, style: const TextStyle(fontSize: 12, color: Color(0xFFB0A080))),
+                        )),
+                        const SizedBox(height: 12),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              plan.price,
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w900,
+                                color: plan.color,
+                              ),
+                            ),
+                            GestureDetector(
+                              onTap: () => Navigator.pop(context),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: plan.color,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Text(
+                                  'Contratar',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w800,
+                                    color: i == 2 ? const Color(0xFF1A1000) : Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildTopProducts() {
@@ -738,188 +980,380 @@ class _AffiliateScreenState extends State<AffiliateScreen>
     );
   }
 
-  // ─── Payments Tab ─────────────────────────────────────────────────────────
+  // ─── Links & Manual Sales Tab ──────────────────────────────────────────────
 
-  Widget _buildPaymentsTab() {
+  Widget _buildLinksAndSalesTab() {
+    final currency = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
+    final totalCommission = _manualSales.fold(0.0, (sum, s) => sum + (s['commission'] as double));
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Balance card
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF1A1508), Color(0xFF2A2010)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: const Color(0xFFD4AF37).withValues(alpha: 0.4),
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFFD4AF37).withValues(alpha: 0.08),
-                  blurRadius: 20,
-                  spreadRadius: 4,
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Row(
-                  children: [
-                    Icon(Icons.account_balance_wallet_rounded,
-                        color: Color(0xFFD4AF37), size: 22),
-                    SizedBox(width: 8),
-                    Text(
-                      'Saldo disponível',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Color(0xFF8A7A5A),
-                        fontWeight: FontWeight.w600,
-                      ),
+          // ── Link Click Stats ──
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF0D1A0D), Color(0xFF0A0A14)],
                     ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                const Text(
-                  'R\$ 2.340,50',
-                  style: TextStyle(
-                    fontSize: 36,
-                    fontWeight: FontWeight.w900,
-                    color: Color(0xFFD4AF37),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppColors.savings.withValues(alpha: 0.35)),
                   ),
-                ),
-                const SizedBox(height: 4),
-                const Text(
-                  'Próximo pagamento: 15/07/2026',
-                  style: TextStyle(fontSize: 12, color: Color(0xFF8A7A5A)),
-                ),
-                const SizedBox(height: 16),
-                GestureDetector(
-                  onTap: () {},
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFFD4AF37), Color(0xFFC8922A)],
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.send_rounded, color: Color(0xFF1A1000), size: 16),
-                        SizedBox(width: 8),
-                        Text(
-                          'Solicitar saque',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w800,
-                            color: Color(0xFF1A1000),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ).animate().fadeIn(duration: 500.ms).slideY(begin: -0.1, end: 0),
-          const SizedBox(height: 24),
-          const Text(
-            'Histórico de Pagamentos',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w800,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 12),
-          ..._payments.asMap().entries.map((e) {
-            final i = e.key;
-            final pay = e.value;
-            return Container(
-              margin: const EdgeInsets.only(bottom: 10),
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: AppColors.surfaceElevated,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 42,
-                    height: 42,
-                    decoration: BoxDecoration(
-                      color: AppColors.savings.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(Icons.check_circle_rounded,
-                        color: AppColors.savings, size: 22),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Pagamento recebido',
-                          style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        Text(
-                          pay.date,
-                          style: const TextStyle(
-                            fontSize: 11,
-                            color: AppColors.textMuted,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: AppColors.savings.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(Icons.link_rounded, color: AppColors.savings, size: 18),
+                          ),
+                          const SizedBox(width: 8),
+                          const Text('Cliques Totais', style: TextStyle(fontSize: 12, color: AppColors.textMuted)),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
                       Text(
-                        pay.amount,
+                        NumberFormat('#,###').format(_totalLinkClicks),
                         style: const TextStyle(
-                          fontSize: 15,
+                          fontSize: 28,
                           fontWeight: FontWeight.w900,
                           color: AppColors.savings,
                         ),
                       ),
-                      Container(
-                        margin: const EdgeInsets.only(top: 4),
-                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: AppColors.savings.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          pay.status,
-                          style: const TextStyle(
-                            fontSize: 9,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.savings,
-                          ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '+$_todayLinkClicks hoje',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: AppColors.savings.withValues(alpha: 0.7),
                         ),
                       ),
                     ],
                   ),
-                ],
+                ).animate().fadeIn(duration: 400.ms).slideX(begin: -0.05, end: 0),
               ),
-            ).animate(delay: (i * 60).ms).fadeIn(duration: 400.ms).slideY(begin: 0.1, end: 0);
-          }),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF1A1508), Color(0xFF0A0A14)],
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFD4AF37).withValues(alpha: 0.35)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFD4AF37).withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(Icons.monetization_on_rounded, color: Color(0xFFD4AF37), size: 18),
+                          ),
+                          const SizedBox(width: 8),
+                          const Text('Comissão Total', style: TextStyle(fontSize: 12, color: AppColors.textMuted)),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        currency.format(totalCommission),
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFFD4AF37),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${_manualSales.length} vendas lançadas',
+                        style: const TextStyle(fontSize: 11, color: Color(0xFF8A7A5A)),
+                      ),
+                    ],
+                  ),
+                ).animate().fadeIn(duration: 400.ms).slideX(begin: 0.05, end: 0),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+
+          // ── Manual Sales Header ──
+          Row(
+            children: [
+              const Text(
+                'Vendas Manuais',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const Spacer(),
+              GestureDetector(
+                onTap: () => _showAddSaleDialog(currency),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFD4AF37), Color(0xFFC8922A)],
+                    ),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.add_rounded, color: Color(0xFF1A1000), size: 16),
+                      SizedBox(width: 6),
+                      Text(
+                        'Lançar Venda',
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF1A1000)),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          if (_manualSales.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceElevated,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.border),
+              ),
+              child: const Center(
+                child: Column(
+                  children: [
+                    Icon(Icons.receipt_long_rounded, color: AppColors.textMuted, size: 40),
+                    SizedBox(height: 12),
+                    Text(
+                      'Nenhuma venda lançada ainda',
+                      style: TextStyle(fontSize: 14, color: AppColors.textMuted),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      'Toque em "Lançar Venda" para registrar',
+                      style: TextStyle(fontSize: 12, color: AppColors.textMuted),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else
+            ..._manualSales.asMap().entries.map((e) {
+              final i = e.key;
+              final sale = e.value;
+              return Container(
+                margin: const EdgeInsets.only(bottom: 10),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceElevated,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFD4AF37).withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(Icons.handshake_rounded, color: Color(0xFFD4AF37), size: 20),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            sale['product'] as String,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textPrimary,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(
+                            sale['date'] as String,
+                            style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          '+${currency.format(sale['commission'])}',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.savings,
+                          ),
+                        ),
+                        Text(
+                          'Venda: ${currency.format(sale['amount'])}',
+                          style: const TextStyle(fontSize: 10, color: AppColors.textMuted),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(width: 8),
+                    GestureDetector(
+                      onTap: () => setState(() => _manualSales.removeAt(i)),
+                      child: const Icon(Icons.delete_outline_rounded, color: AppColors.textMuted, size: 18),
+                    ),
+                  ],
+                ),
+              ).animate(delay: (i * 60).ms).fadeIn(duration: 400.ms).slideY(begin: 0.1, end: 0);
+            }),
+          const SizedBox(height: 80),
         ],
+      ),
+    );
+  }
+
+  void _showAddSaleDialog(NumberFormat currency) {
+    final productCtrl = TextEditingController();
+    final amountCtrl = TextEditingController();
+    final commissionCtrl = TextEditingController();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: const BoxDecoration(
+            color: Color(0xFF0F0F1A),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.border,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Lançar Venda Manual',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                  color: Color(0xFFD4AF37),
+                ),
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                'Registre uma venda realizada fora da plataforma',
+                style: TextStyle(fontSize: 12, color: AppColors.textMuted),
+              ),
+              const SizedBox(height: 20),
+              _dialogField(productCtrl, 'Nome do Produto', Icons.inventory_2_rounded),
+              const SizedBox(height: 12),
+              _dialogField(amountCtrl, 'Valor da Venda (R\$)', Icons.attach_money_rounded, isNumber: true),
+              const SizedBox(height: 12),
+              _dialogField(commissionCtrl, 'Sua Comissão (R\$)', Icons.emoji_events_rounded, isNumber: true),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: GestureDetector(
+                  onTap: () {
+                    if (productCtrl.text.isNotEmpty && amountCtrl.text.isNotEmpty) {
+                      setState(() {
+                        _manualSales.insert(0, {
+                          'product': productCtrl.text,
+                          'amount': double.tryParse(amountCtrl.text.replaceAll(',', '.')) ?? 0.0,
+                          'commission': double.tryParse(commissionCtrl.text.replaceAll(',', '.')) ?? 0.0,
+                          'date': '${DateTime.now().day.toString().padLeft(2, '0')}/${DateTime.now().month.toString().padLeft(2, '0')}/${DateTime.now().year}',
+                        });
+                      });
+                      Navigator.pop(context);
+                    }
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFD4AF37), Color(0xFFC8922A)],
+                      ),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: const Center(
+                      child: Text(
+                        'Lançar Venda',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF1A1000),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _dialogField(TextEditingController ctrl, String label, IconData icon, {bool isNumber = false}) {
+    return TextField(
+      controller: ctrl,
+      keyboardType: isNumber ? const TextInputType.numberWithOptions(decimal: true) : TextInputType.text,
+      style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: const TextStyle(color: AppColors.textMuted, fontSize: 13),
+        prefixIcon: Icon(icon, color: const Color(0xFFD4AF37), size: 18),
+        filled: true,
+        fillColor: AppColors.surfaceElevated,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppColors.border),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppColors.border),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFFD4AF37), width: 2),
+        ),
       ),
     );
   }
@@ -1044,6 +1478,16 @@ class _AffiliateScreenState extends State<AffiliateScreen>
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
+
+class _BoostPlan {
+  final String name;
+  final String price;
+  final String subtitle;
+  final IconData icon;
+  final Color color;
+  final List<String> features;
+  const _BoostPlan(this.name, this.price, this.subtitle, this.icon, this.color, this.features);
+}
 
 class _KPI {
   final String label;

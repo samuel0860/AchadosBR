@@ -1,57 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import '../models/user_model.dart';
 
-class UserModel {
-  final String id;
-  final String name;
-  final String email;
-  final bool isEmailVerified;
-  final bool isAffiliate;
-  final DateTime createdAt;
-
-  const UserModel({
-    required this.id,
-    required this.name,
-    required this.email,
-    this.isEmailVerified = false,
-    this.isAffiliate = false,
-    required this.createdAt,
-  });
-
-  Map<String, dynamic> toJson() => {
-        'id': id,
-        'name': name,
-        'email': email,
-        'isEmailVerified': isEmailVerified,
-        'isAffiliate': isAffiliate,
-        'createdAt': createdAt.toIso8601String(),
-      };
-
-  factory UserModel.fromJson(Map<String, dynamic> map) => UserModel(
-        id: map['id']?.toString() ?? '',
-        name: map['name']?.toString() ?? '',
-        email: map['email']?.toString() ?? '',
-        isEmailVerified: map['isEmailVerified'] == true,
-        isAffiliate: map['isAffiliate'] == true,
-        createdAt: DateTime.tryParse(map['createdAt']?.toString() ?? '') ?? DateTime.now(),
-      );
-
-  UserModel copyWith({
-    String? name,
-    String? email,
-    bool? isEmailVerified,
-    bool? isAffiliate,
-  }) =>
-      UserModel(
-        id: id,
-        name: name ?? this.name,
-        email: email ?? this.email,
-        isEmailVerified: isEmailVerified ?? this.isEmailVerified,
-        isAffiliate: isAffiliate ?? this.isAffiliate,
-        createdAt: createdAt,
-      );
-}
+export '../models/user_model.dart';
 
 enum AuthStatus { idle, loading, authenticated, unauthenticated }
 
@@ -82,6 +34,7 @@ class AuthService extends ChangeNotifier {
   UserModel? get currentUser => _currentUser;
   String? get errorMessage => _errorMessage;
   bool get isLoggedIn => _status == AuthStatus.authenticated;
+  bool get isAffiliate => _currentUser?.isAffiliateUser ?? false;
 
   // ─── Persistent file storage ───────────────────────────────────────────────
 
@@ -89,7 +42,6 @@ class AuthService extends ChangeNotifier {
 
   static Future<String> _getStoragePath() async {
     if (_storageDir != null) return '$_storageDir/achados_auth.json';
-    // Use temp dir as fallback (available on Android without extra packages)
     try {
       final dir = Directory.systemTemp;
       _storageDir = dir.path;
@@ -127,22 +79,37 @@ class AuthService extends ChangeNotifier {
 
     await _loadFromDisk();
 
-    // ── Seed test account se ainda não existir ──────────────────────────────
-    final users = _MemoryStore.users();
-    if (!users.containsKey('teste@achadosbr.com')) {
-      _MemoryStore.setUser('teste@achadosbr.com', {
-        'password': '123456',
-        'profile': UserModel(
-          id: 'test-001',
-          name: 'Usuário Teste',
-          email: 'teste@achadosbr.com',
-          isEmailVerified: true,
-          isAffiliate: true,
-          createdAt: DateTime(2024, 1, 1),
-        ).toJson(),
-      });
-    }
-    // ────────────────────────────────────────────────────────────────────────
+    // ── Seed test accounts (sempre atualiza para garantir tipos corretos) ────
+    _MemoryStore.setUser('teste@achadosbr.com', {
+      'password': '123456',
+      'profile': UserModel(
+        id: 'test-cliente-001',
+        name: 'Usuário Teste',
+        email: 'teste@achadosbr.com',
+        isEmailVerified: true,
+        isAffiliate: false,
+        userType: UserType.cliente,
+        createdAt: DateTime(2024, 1, 1),
+        bio: 'Amo encontrar as melhores ofertas!',
+        avatarColor: '#10B981',
+      ).toJson(),
+    });
+
+    _MemoryStore.setUser('afiliado@achadosbr.com', {
+      'password': '123456',
+      'profile': UserModel(
+        id: 'test-afiliado-001',
+        name: 'Afiliado Teste',
+        email: 'afiliado@achadosbr.com',
+        isEmailVerified: true,
+        isAffiliate: true,
+        userType: UserType.afiliado,
+        createdAt: DateTime(2024, 1, 1),
+        bio: 'Especialista em encontrar os melhores preços do Brasil.',
+        avatarColor: '#D4AF37',
+      ).toJson(),
+    });
+    // ─────────────────────────────────────────────────────────────────────────
 
     final isLoggedIn = _MemoryStore.get('isLoggedIn') == true;
     final userJson = _MemoryStore.get('currentUser');
@@ -195,7 +162,8 @@ class AuthService extends ChangeNotifier {
     return true;
   }
 
-  Future<bool> register(String name, String email, String password) async {
+  Future<bool> register(String name, String email, String password,
+      {UserType userType = UserType.cliente}) async {
     _status = AuthStatus.loading;
     _errorMessage = null;
     notifyListeners();
@@ -216,8 +184,10 @@ class AuthService extends ChangeNotifier {
       name: name,
       email: email,
       isEmailVerified: false,
-      isAffiliate: false,
+      isAffiliate: userType == UserType.afiliado,
+      userType: userType,
       createdAt: DateTime.now(),
+      avatarColor: '#7C3AED',
     );
 
     _MemoryStore.setUser(email, {
@@ -225,37 +195,6 @@ class AuthService extends ChangeNotifier {
       'profile': _currentUser!.toJson(),
     });
     _MemoryStore.set('isLoggedIn', true);
-    _MemoryStore.set('currentUser', _currentUser!.toJson());
-    await _saveToDisk();
-
-    _status = AuthStatus.authenticated;
-    notifyListeners();
-    return true;
-  }
-
-  Future<bool> verifyEmail(String code) async {
-    _status = AuthStatus.loading;
-    notifyListeners();
-
-    await Future.delayed(const Duration(milliseconds: 1000));
-
-    if (code.length != 6) {
-      _status = AuthStatus.authenticated;
-      notifyListeners();
-      return false;
-    }
-
-    final email = _currentUser?.email ?? '';
-    final users = _MemoryStore.users();
-    if (users.containsKey(email)) {
-      final entry = Map<String, dynamic>.from(users[email] as Map<String, dynamic>);
-      final profile = Map<String, dynamic>.from(entry['profile'] as Map<String, dynamic>);
-      profile['isEmailVerified'] = true;
-      entry['profile'] = profile;
-      _MemoryStore.setUser(email, entry);
-    }
-
-    _currentUser = _currentUser?.copyWith(isEmailVerified: true);
     _MemoryStore.set('currentUser', _currentUser!.toJson());
     await _saveToDisk();
 
@@ -281,17 +220,27 @@ class AuthService extends ChangeNotifier {
     return true;
   }
 
-  Future<void> activateAffiliate() async {
+  Future<void> updateProfile({
+    String? name,
+    String? bio,
+    String? avatarColor,
+  }) async {
     final email = _currentUser?.email ?? '';
     final users = _MemoryStore.users();
     if (users.containsKey(email)) {
       final entry = Map<String, dynamic>.from(users[email] as Map<String, dynamic>);
       final profile = Map<String, dynamic>.from(entry['profile'] as Map<String, dynamic>);
-      profile['isAffiliate'] = true;
+      if (name != null) profile['name'] = name;
+      if (bio != null) profile['bio'] = bio;
+      if (avatarColor != null) profile['avatarColor'] = avatarColor;
       entry['profile'] = profile;
       _MemoryStore.setUser(email, entry);
     }
-    _currentUser = _currentUser?.copyWith(isAffiliate: true);
+    _currentUser = _currentUser?.copyWith(
+      name: name,
+      bio: bio,
+      avatarColor: avatarColor,
+    );
     _MemoryStore.set('currentUser', _currentUser!.toJson());
     await _saveToDisk();
     notifyListeners();

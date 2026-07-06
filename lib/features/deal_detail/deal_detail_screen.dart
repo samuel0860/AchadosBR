@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import '../../app/theme.dart';
 import '../../models/deal.dart';
+import '../../services/user_data_service.dart';
+import '../review/reviews_section.dart';
 
 class DealDetailScreen extends StatefulWidget {
   final Deal deal;
@@ -15,13 +17,21 @@ class DealDetailScreen extends StatefulWidget {
 
 class _DealDetailScreenState extends State<DealDetailScreen> {
   bool _hasVotedUp = false;
-  bool _isSaved = false;
+  late bool _isSaved;
   late int _upvotes;
+  final _userDataService = UserDataService();
 
   @override
   void initState() {
     super.initState();
     _upvotes = widget.deal.upvotes;
+    _isSaved = _userDataService.isSaved(widget.deal.id);
+    // Track visit
+    _userDataService.addVisit(
+      widget.deal.id,
+      widget.deal.title,
+      widget.deal.imageUrl,
+    );
   }
 
   @override
@@ -59,11 +69,15 @@ class _DealDetailScreenState extends State<DealDetailScreen> {
                   _buildDescription(deal),
                   const SizedBox(height: 16),
                   _buildVotingSection(deal),
-                  const SizedBox(height: 80),
+                  const SizedBox(height: 8),
                 ],
               ),
             ),
           ),
+          SliverToBoxAdapter(
+            child: ReviewsSection(deal: deal),
+          ),
+          const SliverToBoxAdapter(child: SizedBox(height: 100)),
         ],
       ),
       bottomNavigationBar: _buildBottomBar(deal, currencyFormatter),
@@ -88,7 +102,10 @@ class _DealDetailScreenState extends State<DealDetailScreen> {
       ),
       actions: [
         GestureDetector(
-          onTap: () => setState(() => _isSaved = !_isSaved),
+          onTap: () {
+            _userDataService.toggleSave(widget.deal.id);
+            setState(() => _isSaved = !_isSaved);
+          },
           child: Container(
             margin: const EdgeInsets.all(8),
             decoration: BoxDecoration(

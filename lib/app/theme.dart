@@ -137,3 +137,83 @@ ThemeData appTheme() {
     dividerTheme: const DividerThemeData(color: AppColors.border, thickness: 1),
   );
 }
+
+ThemeData appThemeLight() {
+  const _lightBg = Color(0xFFF8F7FF);
+  const _lightSurface = Color(0xFFFFFFFF);
+  const _lightCard = Color(0xFFFFFFFF);
+  const _lightBorder = Color(0xFFE2E8F0);
+  const _lightTextPrimary = Color(0xFF1E293B);
+  const _lightTextSecondary = Color(0xFF64748B);
+  const _lightTextMuted = Color(0xFF94A3B8);
+
+  final base = ThemeData.light();
+  return base.copyWith(
+    useMaterial3: true,
+    scaffoldBackgroundColor: _lightBg,
+    colorScheme: const ColorScheme.light(
+      primary: AppColors.primary,
+      secondary: AppColors.hot,
+      tertiary: AppColors.savings,
+      surface: _lightSurface,
+      onSurface: _lightTextPrimary,
+      onPrimary: Colors.white,
+    ),
+    textTheme: const TextTheme(
+      displayLarge: TextStyle(fontFamily: _fontFamily, fontSize: 32, fontWeight: FontWeight.w800, color: _lightTextPrimary, letterSpacing: -0.5),
+      displayMedium: TextStyle(fontFamily: _fontFamily, fontSize: 28, fontWeight: FontWeight.w700, color: _lightTextPrimary),
+      headlineLarge: TextStyle(fontFamily: _fontFamily, fontSize: 24, fontWeight: FontWeight.w700, color: _lightTextPrimary),
+      headlineMedium: TextStyle(fontFamily: _fontFamily, fontSize: 20, fontWeight: FontWeight.w600, color: _lightTextPrimary),
+      titleLarge: TextStyle(fontFamily: _fontFamily, fontSize: 18, fontWeight: FontWeight.w600, color: _lightTextPrimary),
+      titleMedium: TextStyle(fontFamily: _fontFamily, fontSize: 16, fontWeight: FontWeight.w500, color: _lightTextPrimary),
+      bodyLarge: TextStyle(fontFamily: _fontFamily, fontSize: 16, fontWeight: FontWeight.w400, color: _lightTextPrimary),
+      bodyMedium: TextStyle(fontFamily: _fontFamily, fontSize: 14, fontWeight: FontWeight.w400, color: _lightTextSecondary),
+      labelLarge: TextStyle(fontFamily: _fontFamily, fontSize: 14, fontWeight: FontWeight.w600, color: _lightTextPrimary),
+      labelSmall: TextStyle(fontFamily: _fontFamily, fontSize: 11, fontWeight: FontWeight.w600, color: _lightTextSecondary, letterSpacing: 0.5),
+    ),
+    appBarTheme: const AppBarTheme(
+      backgroundColor: _lightSurface,
+      elevation: 0,
+      scrolledUnderElevation: 1,
+      centerTitle: false,
+      titleTextStyle: TextStyle(fontFamily: _fontFamily, fontSize: 22, fontWeight: FontWeight.w800, color: _lightTextPrimary),
+      iconTheme: IconThemeData(color: _lightTextPrimary),
+      surfaceTintColor: Colors.transparent,
+    ),
+    bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+      backgroundColor: _lightSurface,
+      selectedItemColor: AppColors.primary,
+      unselectedItemColor: _lightTextMuted,
+      type: BottomNavigationBarType.fixed,
+      elevation: 8,
+    ),
+    cardTheme: CardThemeData(
+      color: _lightCard,
+      elevation: 2,
+      shadowColor: Colors.black12,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: _lightBorder, width: 1),
+      ),
+    ),
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: const Color(0xFFF1F5F9),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: _lightBorder),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: _lightBorder),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: AppColors.primary, width: 2),
+      ),
+      hintStyle: const TextStyle(color: _lightTextMuted, fontSize: 14),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+    ),
+    dividerTheme: const DividerThemeData(color: _lightBorder, thickness: 1),
+  );
+}

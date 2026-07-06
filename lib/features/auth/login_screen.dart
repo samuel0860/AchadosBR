@@ -3,8 +3,11 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../app/theme.dart';
 import '../../services/auth_service.dart';
 import '../../shared/widgets/main_scaffold.dart';
+import '../../shared/widgets/affiliate_scaffold.dart';
 import 'register_screen.dart';
 import 'forgot_password_screen.dart';
+
+enum LoginType { cliente, afiliado }
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -22,6 +25,7 @@ class _LoginScreenState extends State<LoginScreen>
   bool _isLoading = false;
   bool _rememberMe = false;
   String? _errorMsg;
+  LoginType _selectedType = LoginType.cliente;
 
   late AnimationController _bgAnimController;
   late Animation<double> _bgAnimation;
@@ -63,10 +67,14 @@ class _LoginScreenState extends State<LoginScreen>
     setState(() => _isLoading = false);
 
     if (success) {
+      // Rota correta baseada no tipo de usuÃ¡rio
+      final destination = auth.isAffiliate
+          ? const AffiliateScaffold()
+          : const MainScaffold();
+
       Navigator.of(context).pushReplacement(
         PageRouteBuilder(
-          pageBuilder: (context, animation, secondaryAnimation) =>
-              const MainScaffold(),
+          pageBuilder: (context, animation, secondaryAnimation) => destination,
           transitionsBuilder: (context, animation, secondaryAnimation, child) =>
               FadeTransition(opacity: animation, child: child),
           transitionDuration: const Duration(milliseconds: 600),
@@ -90,7 +98,9 @@ class _LoginScreenState extends State<LoginScreen>
                 colors: [
                   const Color(0xFF0A0A14),
                   Color.lerp(
-                    const Color(0xFF0D0525),
+                    _selectedType == LoginType.afiliado 
+                        ? const Color(0xFF1F1A05) // Gold tint
+                        : const Color(0xFF0D0525), // Purple tint
                     const Color(0xFF140A0A),
                     _bgAnimation.value,
                   )!,
@@ -109,11 +119,13 @@ class _LoginScreenState extends State<LoginScreen>
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Column(
                 children: [
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 32),
                   _buildLogo(),
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 32),
+                  _buildLoginToggle(),
+                  const SizedBox(height: 32),
                   _buildWelcomeText(),
-                  const SizedBox(height: 36),
+                  const SizedBox(height: 32),
                   _buildForm(),
                   if (_errorMsg != null) ...[
                     const SizedBox(height: 12),
@@ -140,51 +152,30 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   Widget _buildLogo() {
+    final isAffiliate = _selectedType == LoginType.afiliado;
     return Column(
       children: [
-        Container(
-          width: 88,
-          height: 88,
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFF7C3AED), Color(0xFFEF4444)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.primary.withValues(alpha: 0.5),
-                blurRadius: 30,
-                spreadRadius: 4,
-                offset: const Offset(0, 8),
-              ),
-              BoxShadow(
-                color: AppColors.hot.withValues(alpha: 0.2),
-                blurRadius: 50,
-                spreadRadius: 8,
-              ),
-            ],
-          ),
-          child: const Icon(
-            Icons.local_fire_department_rounded,
-            color: Colors.white,
-            size: 46,
+        ClipRRect(
+          borderRadius: BorderRadius.circular(22),
+          child: Image.asset(
+            isAffiliate ? 'assets/images/app_icon_gold.png' : 'assets/images/app_icon.png',
+            width: 80,
+            height: 80,
+            fit: BoxFit.cover,
           ),
         )
-            .animate()
-            .fadeIn(duration: 600.ms)
-            .scale(begin: const Offset(0.5, 0.5), curve: Curves.elasticOut)
-            .then()
+            .animate(key: ValueKey('logo_$_selectedType'))
+            .fadeIn(duration: 400.ms)
+            .scale(begin: const Offset(0.8, 0.8), curve: Curves.easeOut)
             .shimmer(duration: 1200.ms, color: Colors.white24),
         const SizedBox(height: 16),
         RichText(
-          text: const TextSpan(
+          text: TextSpan(
             children: [
-              TextSpan(
+              const TextSpan(
                 text: 'Achados',
                 style: TextStyle(
-                  fontSize: 32,
+                  fontSize: 28,
                   fontWeight: FontWeight.w900,
                   color: AppColors.textPrimary,
                   letterSpacing: -1,
@@ -193,40 +184,133 @@ class _LoginScreenState extends State<LoginScreen>
               TextSpan(
                 text: 'BR',
                 style: TextStyle(
-                  fontSize: 32,
+                  fontSize: 28,
                   fontWeight: FontWeight.w900,
-                  color: AppColors.primary,
+                  color: isAffiliate ? const Color(0xFFD4AF37) : AppColors.primary,
                   letterSpacing: -1,
                 ),
               ),
             ],
           ),
-        ).animate().fadeIn(delay: 200.ms, duration: 500.ms).slideY(begin: 0.3, end: 0),
+        ),
       ],
     );
   }
 
+  Widget _buildLoginToggle() {
+    return Container(
+      height: 54,
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceElevated.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _buildToggleItem(
+              type: LoginType.cliente,
+              label: 'Sou Cliente',
+              icon: Icons.person_rounded,
+            ),
+          ),
+          Expanded(
+            child: _buildToggleItem(
+              type: LoginType.afiliado,
+              label: 'Sou Afiliado',
+              icon: Icons.storefront_rounded,
+            ),
+          ),
+        ],
+      ),
+    ).animate().fadeIn(delay: 200.ms);
+  }
+
+  Widget _buildToggleItem({
+    required LoginType type,
+    required String label,
+    required IconData icon,
+  }) {
+    final isSelected = _selectedType == type;
+    final isAffiliate = type == LoginType.afiliado;
+
+    return GestureDetector(
+      onTap: () => setState(() => _selectedType = type),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+        width: double.infinity,
+        height: double.infinity,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          gradient: isSelected
+              ? LinearGradient(
+                  colors: isAffiliate 
+                      ? [const Color(0xFFD4AF37), const Color(0xFFF59E0B)]
+                      : [const Color(0xFF7C3AED), const Color(0xFFEF4444)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                )
+              : null,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: (isAffiliate ? const Color(0xFFD4AF37) : AppColors.primary).withValues(alpha: 0.3),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  )
+                ]
+              : [],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 16,
+              color: isSelected ? Colors.white : AppColors.textMuted,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                color: isSelected ? Colors.white : AppColors.textMuted,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildWelcomeText() {
+    final isAffiliate = _selectedType == LoginType.afiliado;
     return Column(
       children: [
-        const Text(
-          'Bem-vindo de volta!',
-          style: TextStyle(
+        Text(
+          isAffiliate ? 'Painel de Afiliado' : 'Bem-vindo de volta!',
+          style: const TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.w800,
             color: AppColors.textPrimary,
           ),
-        ).animate().fadeIn(delay: 300.ms, duration: 500.ms).slideY(begin: 0.2, end: 0),
+        ).animate(key: ValueKey('welcome_$_selectedType')).fadeIn(duration: 400.ms).slideY(begin: 0.2, end: 0),
         const SizedBox(height: 8),
-        const Text(
-          'Entre para descobrir as melhores\npromoções do Brasil',
+        Text(
+          isAffiliate 
+              ? 'Gerencie seus achados e fature com vendas' 
+              : 'Entre para descobrir as melhores promoÃ§Ãµes',
           textAlign: TextAlign.center,
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 14,
             color: AppColors.textMuted,
             height: 1.5,
           ),
-        ).animate().fadeIn(delay: 400.ms, duration: 500.ms),
+        ).animate(key: ValueKey('subtitle_$_selectedType')).fadeIn(duration: 500.ms),
       ],
     );
   }
@@ -235,6 +319,7 @@ class _LoginScreenState extends State<LoginScreen>
     return Form(
       key: _formKey,
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildTextField(
             controller: _emailController,
@@ -244,10 +329,10 @@ class _LoginScreenState extends State<LoginScreen>
             keyboardType: TextInputType.emailAddress,
             validator: (v) {
               if (v == null || v.isEmpty) return 'Informe seu e-mail';
-              if (!v.contains('@')) return 'E-mail inválido';
+              if (!v.contains('@')) return 'E-mail invÃ¡lido';
               return null;
             },
-          ).animate().fadeIn(delay: 500.ms, duration: 400.ms).slideX(begin: -0.1, end: 0),
+          ),
           const SizedBox(height: 16),
           _buildTextField(
             controller: _passwordController,
@@ -270,7 +355,7 @@ class _LoginScreenState extends State<LoginScreen>
               if (v.length < 6) return 'Senha muito curta';
               return null;
             },
-          ).animate().fadeIn(delay: 600.ms, duration: 400.ms).slideX(begin: 0.1, end: 0),
+          ),
           const SizedBox(height: 12),
           Row(
             children: [
@@ -278,20 +363,23 @@ class _LoginScreenState extends State<LoginScreen>
                 onTap: () => setState(() => _rememberMe = !_rememberMe),
                 child: Row(
                   children: [
-                    AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
+                    Container(
                       width: 20,
                       height: 20,
                       decoration: BoxDecoration(
-                        color: _rememberMe ? AppColors.primary : Colors.transparent,
+                        color: _rememberMe 
+                            ? (_selectedType == LoginType.afiliado ? const Color(0xFFD4AF37) : AppColors.primary)
+                            : Colors.transparent,
                         borderRadius: BorderRadius.circular(5),
                         border: Border.all(
-                          color: _rememberMe ? AppColors.primary : AppColors.borderLight,
+                          color: _rememberMe 
+                              ? (_selectedType == LoginType.afiliado ? const Color(0xFFD4AF37) : AppColors.primary)
+                              : AppColors.borderLight,
                           width: 1.5,
                         ),
                       ),
                       child: _rememberMe
-                          ? const Icon(Icons.check_rounded, color: Colors.white, size: 13)
+                          ? const Icon(Icons.check_rounded, color: Colors.white, size: 14)
                           : null,
                     ),
                     const SizedBox(width: 8),
@@ -308,17 +396,17 @@ class _LoginScreenState extends State<LoginScreen>
                   context,
                   MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
                 ),
-                child: const Text(
+                child: Text(
                   'Esqueci minha senha',
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.primary,
+                    color: _selectedType == LoginType.afiliado ? const Color(0xFFD4AF37) : AppColors.primary,
                   ),
                 ),
               ),
             ],
-          ).animate().fadeIn(delay: 700.ms, duration: 400.ms),
+          ),
         ],
       ),
     );
@@ -357,6 +445,7 @@ class _LoginScreenState extends State<LoginScreen>
     Widget? suffixIcon,
     String? Function(String?)? validator,
   }) {
+    final accentColor = _selectedType == LoginType.afiliado ? const Color(0xFFD4AF37) : AppColors.primary;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -381,10 +470,10 @@ class _LoginScreenState extends State<LoginScreen>
               margin: const EdgeInsets.all(12),
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.12),
+                color: accentColor.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Icon(prefixIcon, color: AppColors.primary, size: 18),
+              child: Icon(prefixIcon, color: accentColor, size: 18),
             ),
             suffixIcon: suffixIcon != null
                 ? Padding(
@@ -405,7 +494,7 @@ class _LoginScreenState extends State<LoginScreen>
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(color: AppColors.primary, width: 2),
+              borderSide: BorderSide(color: accentColor, width: 2),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
@@ -423,22 +512,25 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   Widget _buildLoginButton() {
+    final isAffiliate = _selectedType == LoginType.afiliado;
     return GestureDetector(
       onTap: _isLoading ? null : _handleLogin,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
+        duration: const Duration(milliseconds: 300),
         width: double.infinity,
         height: 56,
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFF7C3AED), Color(0xFFEF4444)],
+          gradient: LinearGradient(
+            colors: isAffiliate 
+                ? [const Color(0xFFD4AF37), const Color(0xFFF59E0B)]
+                : [const Color(0xFF7C3AED), const Color(0xFFEF4444)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: AppColors.primary.withValues(alpha: 0.45),
+              color: (isAffiliate ? const Color(0xFFD4AF37) : AppColors.primary).withValues(alpha: 0.45),
               blurRadius: 20,
               offset: const Offset(0, 8),
             ),
@@ -451,14 +543,14 @@ class _LoginScreenState extends State<LoginScreen>
                   height: 24,
                   child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
                 )
-              : const Row(
+              : Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.login_rounded, color: Colors.white, size: 20),
-                    SizedBox(width: 10),
+                    Icon(isAffiliate ? Icons.rocket_launch_rounded : Icons.login_rounded, color: Colors.white, size: 20),
+                    const SizedBox(width: 10),
                     Text(
-                      'Entrar',
-                      style: TextStyle(
+                      isAffiliate ? 'Acessar Painel' : 'Entrar',
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
                         color: Colors.white,
@@ -468,7 +560,7 @@ class _LoginScreenState extends State<LoginScreen>
                   ],
                 ),
         ),
-      ).animate().fadeIn(delay: 800.ms, duration: 400.ms).slideY(begin: 0.2, end: 0),
+      ),
     );
   }
 
@@ -499,7 +591,7 @@ class _LoginScreenState extends State<LoginScreen>
           ),
         ),
       ],
-    ).animate().fadeIn(delay: 900.ms, duration: 400.ms);
+    );
   }
 
   Widget _buildSocialButtons() {
@@ -520,16 +612,8 @@ class _LoginScreenState extends State<LoginScreen>
             color: const Color(0xFF1877F2),
           ),
         ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _buildSocialButton(
-            icon: Icons.apple_rounded,
-            label: 'Apple',
-            color: AppColors.textPrimary,
-          ),
-        ),
       ],
-    ).animate().fadeIn(delay: 1000.ms, duration: 400.ms);
+    );
   }
 
   Widget _buildSocialButton({
@@ -569,7 +653,7 @@ class _LoginScreenState extends State<LoginScreen>
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         const Text(
-          'Não tem uma conta? ',
+          'NÃ£o tem uma conta? ',
           style: TextStyle(fontSize: 14, color: AppColors.textMuted),
         ),
         GestureDetector(
@@ -577,35 +661,35 @@ class _LoginScreenState extends State<LoginScreen>
             context,
             MaterialPageRoute(builder: (_) => const RegisterScreen()),
           ),
-          child: const Text(
-            'Cadastre-se grátis',
+          child: Text(
+            'Cadastre-se grÃ¡tis',
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w700,
-              color: AppColors.primary,
+              color: _selectedType == LoginType.afiliado ? const Color(0xFFD4AF37) : AppColors.primary,
             ),
           ),
         ),
       ],
-    ).animate().fadeIn(delay: 1100.ms, duration: 400.ms);
+    );
   }
 
   Widget _buildTestCredentialsBanner() {
+    final isAffiliate = _selectedType == LoginType.afiliado;
+    final color = isAffiliate ? const Color(0xFFD4AF37) : AppColors.savings;
+
     return GestureDetector(
       onTap: () {
-        // Auto-preenche os campos com as credenciais de teste
-        _emailController.text = 'teste@achadosbr.com';
+        _emailController.text = isAffiliate ? 'afiliado@achadosbr.com' : 'teste@achadosbr.com';
         _passwordController.text = '123456';
         setState(() {});
       },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: const Color(0xFF0D1F0D),
+          color: isAffiliate ? const Color(0xFF1F1A05) : const Color(0xFF0D1F0D),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: AppColors.savings.withValues(alpha: 0.4),
-          ),
+          border: Border.all(color: color.withValues(alpha: 0.4)),
         ),
         child: Row(
           children: [
@@ -613,32 +697,34 @@ class _LoginScreenState extends State<LoginScreen>
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: AppColors.savings.withValues(alpha: 0.15),
+                color: color.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(
-                Icons.bug_report_rounded,
-                color: AppColors.savings,
+              child: Icon(
+                isAffiliate ? Icons.workspace_premium_rounded : Icons.bug_report_rounded,
+                color: color,
                 size: 20,
               ),
             ),
             const SizedBox(width: 12),
-            const Expanded(
+            Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Conta de teste — toque para preencher',
+                    isAffiliate ? 'Login Afiliado (Toque para preencher)' : 'Login Cliente (Toque para preencher)',
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.savings,
+                      color: color,
                     ),
                   ),
-                  SizedBox(height: 2),
+                  const SizedBox(height: 2),
                   Text(
-                    'E-mail: teste@achadosbr.com  |  Senha: 123456',
-                    style: TextStyle(
+                    isAffiliate 
+                        ? 'Email: afiliado@achadosbr.com  |  Senha: 123456'
+                        : 'Email: teste@achadosbr.com  |  Senha: 123456',
+                    style: const TextStyle(
                       fontSize: 11,
                       color: AppColors.textMuted,
                       fontFamily: 'monospace',
@@ -647,14 +733,10 @@ class _LoginScreenState extends State<LoginScreen>
                 ],
               ),
             ),
-            const Icon(
-              Icons.touch_app_rounded,
-              color: AppColors.savings,
-              size: 18,
-            ),
+            Icon(Icons.touch_app_rounded, color: color, size: 18),
           ],
         ),
       ),
-    ).animate().fadeIn(delay: 1200.ms, duration: 400.ms);
+    ).animate(key: ValueKey('test_banner_$_selectedType')).fadeIn(duration: 400.ms);
   }
 }

@@ -1,12 +1,20 @@
 import 'package:flutter/material.dart';
 import '../../app/theme.dart';
 
-class NotificationsScreen extends StatelessWidget {
+class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final notifications = [
+  State<NotificationsScreen> createState() => _NotificationsScreenState();
+}
+
+class _NotificationsScreenState extends State<NotificationsScreen> {
+  late List<_NotificationItem> _notifications;
+
+  @override
+  void initState() {
+    super.initState();
+    _notifications = [
       _NotificationItem(
         icon: Icons.local_fire_department_rounded,
         title: 'PS5 com 32% de desconto!',
@@ -64,7 +72,10 @@ class NotificationsScreen extends StatelessWidget {
         color: const Color(0xFFD4AF37),
       ),
     ];
+  }
 
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -78,7 +89,29 @@ class NotificationsScreen extends StatelessWidget {
         ),
         actions: [
           TextButton.icon(
-            onPressed: () {},
+            onPressed: () {
+              setState(() {
+                _notifications = _notifications
+                    .map((n) => _NotificationItem(
+                          icon: n.icon,
+                          title: n.title,
+                          subtitle: n.subtitle,
+                          time: n.time,
+                          isNew: false,
+                          color: n.color,
+                        ))
+                    .toList();
+              });
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: const Text('Todas as notificações marcadas como lidas'),
+                  backgroundColor: AppColors.savings,
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                ),
+              );
+            },
             icon: const Icon(Icons.done_all_rounded, size: 16, color: AppColors.primary),
             label: const Text(
               'Marcar tudo',
@@ -88,11 +121,11 @@ class NotificationsScreen extends StatelessWidget {
         ],
       ),
       body: ListView.separated(
-        padding: const EdgeInsets.all(16),
-        itemCount: notifications.length,
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+        itemCount: _notifications.length,
         separatorBuilder: (context, index) => const SizedBox(height: 8),
         itemBuilder: (context, index) {
-          final notif = notifications[index];
+          final notif = _notifications[index];
           return Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
