@@ -43,7 +43,8 @@ class _DealCardState extends State<DealCard> {
       ),
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-        height: 170, // Increased to 170 for better vertical space
+        // Sem altura fixa — o card se adapta ao conteúdo
+        constraints: const BoxConstraints(minHeight: 120),
         decoration: BoxDecoration(
           gradient: const LinearGradient(
             colors: [AppColors.card, Color(0xFF16213E)],
@@ -65,31 +66,34 @@ class _DealCardState extends State<DealCard> {
             ),
           ],
         ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ─── LADO ESQUERDO: IMAGEM ─────────────────────────────────────────
-            _buildSideImage(deal),
-            
-            // ─── LADO DIREITO: INFORMAÇÕES ─────────────────────────────────────
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildHorizontalHeader(deal),
-                    const SizedBox(height: 4),
-                    _buildCompactTitle(deal),
-                    const Spacer(),
-                    _buildPriceSection(deal, currencyFormatter),
-                    const SizedBox(height: 8),
-                    _buildHorizontalFooter(deal),
-                  ],
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // ─── LADO ESQUERDO: IMAGEM ────────────────────────────────────
+              _buildSideImage(deal),
+
+              // ─── LADO DIREITO: INFORMAÇÕES ────────────────────────────────
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _buildHorizontalHeader(deal),
+                      const SizedBox(height: 4),
+                      _buildCompactTitle(deal),
+                      const SizedBox(height: 6),
+                      _buildPriceSection(deal, currencyFormatter),
+                      const SizedBox(height: 8),
+                      _buildHorizontalFooter(deal),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -98,15 +102,8 @@ class _DealCardState extends State<DealCard> {
   Widget _buildSideImage(Deal deal) {
     return Stack(
       children: [
-        Container(
-          width: 130,
-          height: double.infinity,
-          decoration: const BoxDecoration(
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(16),
-              bottomLeft: Radius.circular(16),
-            ),
-          ),
+        SizedBox(
+          width: 120,
           child: ClipRRect(
             borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(16),
@@ -116,7 +113,8 @@ class _DealCardState extends State<DealCard> {
                 ? Image.asset(
                     deal.imageUrl,
                     fit: BoxFit.cover,
-                    errorBuilder: (context, url, error) => _buildImageFallback(deal),
+                    errorBuilder: (context, url, error) =>
+                        _buildImageFallback(deal),
                   )
                 : Image.network(
                     deal.imageUrl,
@@ -133,7 +131,8 @@ class _DealCardState extends State<DealCard> {
                         ),
                       );
                     },
-                    errorBuilder: (context, url, error) => _buildImageFallback(deal),
+                    errorBuilder: (context, url, error) =>
+                        _buildImageFallback(deal),
                   ),
           ),
         ),
@@ -142,12 +141,12 @@ class _DealCardState extends State<DealCard> {
           top: 8,
           left: 8,
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
                 colors: [AppColors.hot, Color(0xFFDC2626)],
               ),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(10),
               boxShadow: [
                 BoxShadow(
                   color: AppColors.hot.withValues(alpha: 0.4),
@@ -159,7 +158,7 @@ class _DealCardState extends State<DealCard> {
             child: Text(
               '-${deal.discountPercent.toStringAsFixed(0)}%',
               style: const TextStyle(
-                fontSize: 11,
+                fontSize: 10,
                 fontWeight: FontWeight.w900,
                 color: Colors.white,
               ),
@@ -175,11 +174,14 @@ class _DealCardState extends State<DealCard> {
       children: [
         // Store logo mini
         StoreLogo(
-          store: findStoreBrandByName(deal.store) ??
+          store:
+              findStoreBrandByName(deal.store) ??
               StoreBrand(
                 id: 'custom',
                 name: deal.store,
-                emoji: deal.store.isNotEmpty ? deal.store[0].toUpperCase() : '?',
+                emoji: deal.store.isNotEmpty
+                    ? deal.store[0].toUpperCase()
+                    : '?',
                 primaryColor: AppColors.primary,
                 textColor: Colors.white,
               ),
@@ -204,7 +206,11 @@ class _DealCardState extends State<DealCard> {
                 ),
               ),
               const SizedBox(width: 4),
-              const Icon(Icons.verified_rounded, size: 12, color: AppColors.verified),
+              const Icon(
+                Icons.verified_rounded,
+                size: 12,
+                color: AppColors.verified,
+              ),
             ],
           ),
         ),
@@ -223,7 +229,9 @@ class _DealCardState extends State<DealCard> {
 
     Color themeColor;
     try {
-      themeColor = Color(int.parse('FF${colorHex.replaceAll('#', '')}', radix: 16));
+      themeColor = Color(
+        int.parse('FF${colorHex.replaceAll('#', '')}', radix: 16),
+      );
     } catch (_) {
       themeColor = AppColors.primary;
     }
@@ -320,39 +328,108 @@ class _DealCardState extends State<DealCard> {
 
   Widget _buildHorizontalFooter(Deal deal) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      mainAxisSize: MainAxisSize.max,
       children: [
-        _buildVoteButton(
-          icon: Icons.keyboard_arrow_up_rounded,
-          count: _upvotes,
-          isActive: _hasVotedUp,
-          activeColor: AppColors.savings,
+        // Botão de upvote
+        GestureDetector(
           onTap: () => setState(() {
-            if (_hasVotedUp) { _hasVotedUp = false; _upvotes--; }
-            else { _hasVotedUp = true; _upvotes++; if (_hasVotedDown) _hasVotedDown = false; }
+            if (_hasVotedUp) {
+              _hasVotedUp = false;
+              _upvotes--;
+            } else {
+              _hasVotedUp = true;
+              _upvotes++;
+              if (_hasVotedDown) _hasVotedDown = false;
+            }
           }),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+            decoration: BoxDecoration(
+              color: _hasVotedUp
+                  ? AppColors.savings.withValues(alpha: 0.15)
+                  : AppColors.surfaceElevated,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: _hasVotedUp
+                    ? AppColors.savings.withValues(alpha: 0.5)
+                    : AppColors.border,
+                width: 1,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.keyboard_arrow_up_rounded,
+                  size: 16,
+                  color: _hasVotedUp ? AppColors.savings : AppColors.textMuted,
+                ),
+                const SizedBox(width: 2),
+                Text(
+                  '$_upvotes',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: _hasVotedUp
+                        ? AppColors.savings
+                        : AppColors.textMuted,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
-        const SizedBox(width: 4),
-        _buildActionButton(
-          icon: Icons.chat_bubble_outline_rounded,
-          label: '${deal.comments}',
-          color: AppColors.textMuted,
+        const SizedBox(width: 6),
+        // Botão de comentários
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+          decoration: BoxDecoration(
+            color: AppColors.surfaceElevated,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: AppColors.border, width: 1),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.chat_bubble_outline_rounded,
+                size: 12,
+                color: AppColors.textMuted,
+              ),
+              const SizedBox(width: 3),
+              Text(
+                '${deal.comments}',
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textMuted,
+                ),
+              ),
+            ],
+          ),
         ),
+        // Espaço flexível mínimo
         const Spacer(),
+        // Botão Ver Mais — sempre visível e dentro do card
         GestureDetector(
           onTap: () => Navigator.push(
             context,
             MaterialPageRoute(builder: (_) => DealDetailScreen(deal: deal)),
           ),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
             decoration: BoxDecoration(
               gradient: AppGradients.primaryGradient,
               borderRadius: BorderRadius.circular(8),
             ),
             child: const Text(
               'Ver mais',
-              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.white),
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+              ),
             ),
           ),
         ),
@@ -394,9 +471,7 @@ class _DealCardState extends State<DealCard> {
 
   Widget _buildImageFallback(Deal deal) {
     return Container(
-      decoration: const BoxDecoration(
-        gradient: AppGradients.dealCardGradient,
-      ),
+      decoration: const BoxDecoration(gradient: AppGradients.dealCardGradient),
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -421,7 +496,6 @@ class _DealCardState extends State<DealCard> {
     );
   }
 
-
   Widget _buildVoteButton({
     required IconData icon,
     required int count,
@@ -435,17 +509,25 @@ class _DealCardState extends State<DealCard> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
-          color: isActive ? activeColor.withValues(alpha: 0.15) : AppColors.surfaceElevated,
+          color: isActive
+              ? activeColor.withValues(alpha: 0.15)
+              : AppColors.surfaceElevated,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isActive ? activeColor.withValues(alpha: 0.5) : AppColors.border,
+            color: isActive
+                ? activeColor.withValues(alpha: 0.5)
+                : AppColors.border,
             width: 1,
           ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 18, color: isActive ? activeColor : AppColors.textMuted),
+            Icon(
+              icon,
+              size: 18,
+              color: isActive ? activeColor : AppColors.textMuted,
+            ),
             const SizedBox(width: 3),
             Text(
               '$count',
@@ -478,7 +560,14 @@ class _DealCardState extends State<DealCard> {
         children: [
           Icon(icon, size: 14, color: color),
           const SizedBox(width: 4),
-          Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: color)),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: color,
+            ),
+          ),
         ],
       ),
     );
@@ -486,16 +575,26 @@ class _DealCardState extends State<DealCard> {
 
   IconData _categoryIcon(DealCategory cat) {
     switch (cat) {
-      case DealCategory.eletronicos: return Icons.devices_rounded;
-      case DealCategory.moda: return Icons.checkroom_rounded;
-      case DealCategory.casa: return Icons.home_rounded;
-      case DealCategory.jogos: return Icons.sports_esports_rounded;
-      case DealCategory.livros: return Icons.menu_book_rounded;
-      case DealCategory.beleza: return Icons.face_rounded;
-      case DealCategory.esporte: return Icons.fitness_center_rounded;
-      case DealCategory.viagem: return Icons.flight_rounded;
-      case DealCategory.alimentacao: return Icons.restaurant_rounded;
-      case DealCategory.outros: return Icons.local_offer_rounded;
+      case DealCategory.eletronicos:
+        return Icons.devices_rounded;
+      case DealCategory.moda:
+        return Icons.checkroom_rounded;
+      case DealCategory.casa:
+        return Icons.home_rounded;
+      case DealCategory.jogos:
+        return Icons.sports_esports_rounded;
+      case DealCategory.livros:
+        return Icons.menu_book_rounded;
+      case DealCategory.beleza:
+        return Icons.face_rounded;
+      case DealCategory.esporte:
+        return Icons.fitness_center_rounded;
+      case DealCategory.viagem:
+        return Icons.flight_rounded;
+      case DealCategory.alimentacao:
+        return Icons.restaurant_rounded;
+      case DealCategory.outros:
+        return Icons.local_offer_rounded;
     }
   }
 
