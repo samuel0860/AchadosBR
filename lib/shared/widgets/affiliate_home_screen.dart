@@ -431,48 +431,13 @@ class _AffiliateHomeScreenState extends State<AffiliateHomeScreen> {
                   final deal = mockDeals[index];
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 12),
-                    child: Stack(
-                      children: [
-                        DealCard(
-                          deal: deal,
-                          onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (_) => DealDetailScreen(deal: deal)),
-                          ),
-                        ),
-                        // Badge de comissão estimada
-                        Positioned(
-                          top: 12,
-                          right: 12,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF1A1200),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                  color: const Color(0xFFD4AF37)
-                                      .withValues(alpha: 0.5)),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(Icons.emoji_events_rounded,
-                                    color: Color(0xFFD4AF37), size: 12),
-                                const SizedBox(width: 3),
-                                Text(
-                                  '+R\$ ${(deal.dealPrice * 0.044).toStringAsFixed(0)}',
-                                  style: const TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w800,
-                                      color: Color(0xFFD4AF37)),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
+                    child: DealCard(
+                      deal: deal,
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => DealDetailScreen(deal: deal)),
+                      ),
                     ).animate().fadeIn(delay: Duration(milliseconds: 80 * index)),
                   );
                 },

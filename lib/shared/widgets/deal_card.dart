@@ -345,10 +345,10 @@ class _DealCardState extends State<DealCard> {
             MaterialPageRoute(builder: (_) => DealDetailScreen(deal: deal)),
           ),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
               gradient: AppGradients.primaryGradient,
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(8),
             ),
             child: const Text(
               'Ver mais',
