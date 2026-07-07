@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 enum DealCategory {
   eletronicos,
   moda,
@@ -35,28 +37,28 @@ enum DealCategory {
     }
   }
 
-  String get emoji {
+  IconData get icon {
     switch (this) {
       case DealCategory.eletronicos:
-        return '📱';
+        return Icons.smartphone_rounded;
       case DealCategory.moda:
-        return '👗';
+        return Icons.checkroom_rounded;
       case DealCategory.casa:
-        return '🏠';
+        return Icons.home_rounded;
       case DealCategory.beleza:
-        return '💄';
+        return Icons.face_retouching_natural_rounded;
       case DealCategory.alimentacao:
-        return '🍔';
+        return Icons.fastfood_rounded;
       case DealCategory.jogos:
-        return '🎮';
+        return Icons.sports_esports_rounded;
       case DealCategory.esporte:
-        return '⚽';
+        return Icons.sports_soccer_rounded;
       case DealCategory.livros:
-        return '📚';
+        return Icons.menu_book_rounded;
       case DealCategory.viagem:
-        return '✈️';
+        return Icons.flight_takeoff_rounded;
       case DealCategory.outros:
-        return '🛍️';
+        return Icons.shopping_bag_rounded;
     }
   }
 }
@@ -83,6 +85,7 @@ class Deal {
   final bool isHot;
   final bool hasFreeShipping;
   final DateTime? expiresAt;
+  final String affiliateId; // ID do afiliado que publicou (vazio = comunidade)
 
   const Deal({
     required this.id,
@@ -106,6 +109,7 @@ class Deal {
     this.isHot = false,
     this.hasFreeShipping = false,
     this.expiresAt,
+    this.affiliateId = '',
   });
 
   double get discountPercent {

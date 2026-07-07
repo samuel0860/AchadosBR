@@ -27,7 +27,7 @@ class _MainScaffoldState extends State<MainScaffold> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.appColors.background,
       body: IndexedStack(
         index: _currentIndex,
         children: _screens,
@@ -37,11 +37,12 @@ class _MainScaffoldState extends State<MainScaffold> {
   }
 
   Widget _buildBottomNav(BuildContext context) {
+    final colors = context.appColors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        border: const Border(
-          top: BorderSide(color: AppColors.border, width: 1),
+        color: colors.navBarBackground,
+        border: Border(
+          top: BorderSide(color: colors.border, width: 1),
         ),
         boxShadow: [
           BoxShadow(
@@ -70,6 +71,7 @@ class _MainScaffoldState extends State<MainScaffold> {
 
   Widget _buildNavItem(IconData icon, String label, int index) {
     final isSelected = _currentIndex == index;
+    final colors = context.appColors;
     return GestureDetector(
       onTap: () => setState(() => _currentIndex = index),
       child: AnimatedContainer(
@@ -89,7 +91,7 @@ class _MainScaffoldState extends State<MainScaffold> {
               children: [
                 Icon(
                   icon,
-                  color: isSelected ? AppColors.primary : AppColors.textMuted,
+                  color: isSelected ? AppColors.primary : colors.textMuted,
                   size: 24,
                 ),
                 // Badge de notificações
@@ -114,7 +116,7 @@ class _MainScaffoldState extends State<MainScaffold> {
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                color: isSelected ? AppColors.primary : AppColors.textMuted,
+                color: isSelected ? AppColors.primary : colors.textMuted,
               ),
             ),
           ],

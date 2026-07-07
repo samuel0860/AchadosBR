@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../app/theme.dart';
 import '../../data/mock_deals.dart';
-import '../../models/deal.dart';
 import '../../services/auth_service.dart';
 import '../../shared/widgets/deal_card.dart';
 import '../../features/deal_detail/deal_detail_screen.dart';
+import '../../features/home/all_deals_screen.dart';
 import '../../features/notifications/notifications_screen.dart';
 import '../../features/profile/profile_screen.dart';
 import '../../features/affiliate/product_form_screen.dart';
+import '../../features/affiliate/affiliate_page_screen.dart';
 
 /// Tela inicial exclusiva para AFILIADOS
 class AffiliateHomeScreen extends StatefulWidget {
@@ -113,6 +114,50 @@ class _AffiliateHomeScreenState extends State<AffiliateHomeScreen> {
               ],
             ),
             actions: [
+              // Minha Vitrine
+              GestureDetector(
+                onTap: () {
+                  final user = _authService.currentUser;
+                  if (user != null) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => AffiliatePageScreen(
+                          affiliateId: user.id,
+                          affiliateName: user.name,
+                          isOwner: true,
+                        ),
+                      ),
+                    );
+                  }
+                },
+                child: Container(
+                  margin: const EdgeInsets.only(right: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1A1200),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                        color: const Color(0xFFD4AF37).withValues(alpha: 0.4)),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.storefront_rounded,
+                          color: Color(0xFFD4AF37), size: 14),
+                      SizedBox(width: 5),
+                      Text(
+                        'Vitrine',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFFD4AF37),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
               // Notificações
               GestureDetector(
                 onTap: () => Navigator.push(
@@ -239,7 +284,12 @@ class _AffiliateHomeScreenState extends State<AffiliateHomeScreen> {
                       ),
                       const Spacer(),
                       GestureDetector(
-                        onTap: () {},  // TODO: navegar para lista completa
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const AllDealsScreen(),
+                          ),
+                        ),
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(

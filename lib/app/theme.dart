@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
+  // ─── Cores de marca (sempre fixas) ───────────────────────────────────────
   static const Color primary = Color(0xFF7C3AED);
   static const Color primaryLight = Color(0xFF9D5CF5);
   static const Color primaryDark = Color(0xFF5B21B6);
@@ -14,6 +15,9 @@ class AppColors {
   static const Color coupon = Color(0xFFF59E0B);
   static const Color couponLight = Color(0xFFFCD34D);
 
+  static const Color verified = Color(0xFF3B82F6);
+
+  // ─── Cores semânticas escuras (padrão / fallback) ─────────────────────────
   static const Color background = Color(0xFF0A0A14);
   static const Color surface = Color(0xFF13131F);
   static const Color surfaceElevated = Color(0xFF1C1C2E);
@@ -28,10 +32,61 @@ class AppColors {
   static const Color border = Color(0xFF1E293B);
   static const Color borderLight = Color(0xFF334155);
 
-  static const Color verified = Color(0xFF3B82F6);
   static const Color shimmerBase = Color(0xFF1E1E32);
   static const Color shimmerHighlight = Color(0xFF2A2A44);
 }
+
+// ─── Cores dinâmicas que respondem ao tema ────────────────────────────────────
+
+/// Acesso via `context.appColors.background`, `context.appColors.surface`, etc.
+class AppThemeColors {
+  final BuildContext context;
+  const AppThemeColors(this.context);
+
+  bool get isDark => Theme.of(context).brightness == Brightness.dark;
+
+  // Superfícies
+  Color get background =>
+      isDark ? const Color(0xFF0A0A14) : const Color(0xFFF8F7FF);
+  Color get surface =>
+      isDark ? const Color(0xFF13131F) : const Color(0xFFFFFFFF);
+  Color get surfaceElevated =>
+      isDark ? const Color(0xFF1C1C2E) : const Color(0xFFF1F5F9);
+  Color get card =>
+      isDark ? const Color(0xFF1A1A2E) : const Color(0xFFFFFFFF);
+
+  // Bordas
+  Color get border =>
+      isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0);
+  Color get borderLight =>
+      isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1);
+
+  // Texto
+  Color get textPrimary =>
+      isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E293B);
+  Color get textSecondary =>
+      isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+  Color get textMuted =>
+      isDark ? const Color(0xFF475569) : const Color(0xFF94A3B8);
+
+  // Shimmer
+  Color get shimmerBase =>
+      isDark ? const Color(0xFF1E1E32) : const Color(0xFFE2E8F0);
+  Color get shimmerHighlight =>
+      isDark ? const Color(0xFF2A2A44) : const Color(0xFFF1F5F9);
+
+  // AppBar
+  Color get appBarBackground =>
+      isDark ? const Color(0xFF0A0A14) : const Color(0xFFFFFFFF);
+  Color get navBarBackground =>
+      isDark ? const Color(0xFF13131F) : const Color(0xFFFFFFFF);
+}
+
+extension AppThemeColorsExtension on BuildContext {
+  AppThemeColors get appColors => AppThemeColors(this);
+  bool get isDark => Theme.of(this).brightness == Brightness.dark;
+}
+
 
 class AppGradients {
   static const LinearGradient primaryGradient = LinearGradient(

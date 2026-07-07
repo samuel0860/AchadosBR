@@ -83,7 +83,7 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.appColors.background,
       body: CustomScrollView(
         controller: _scrollController,
         slivers: [
@@ -101,6 +101,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   Widget _buildClientProof() {
     final msg = _clientProof[_proofIndex];
+    final colors = context.appColors;
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 500),
       child: Container(
@@ -108,9 +109,9 @@ class _HomeScreenState extends State<HomeScreen>
         margin: const EdgeInsets.fromLTRB(16, 8, 16, 8),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: AppColors.surfaceElevated,
+          color: colors.surfaceElevated,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: colors.border),
         ),
         child: Row(
           children: [
@@ -129,7 +130,7 @@ class _HomeScreenState extends State<HomeScreen>
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 text: TextSpan(
-                  style: const TextStyle(fontSize: 12),
+                  style: TextStyle(fontSize: 12, color: colors.textSecondary),
                   children: [
                     TextSpan(
                       text: '${msg.$1} ',
@@ -139,7 +140,7 @@ class _HomeScreenState extends State<HomeScreen>
                     ),
                     TextSpan(
                       text: '${msg.$2} ',
-                      style: const TextStyle(color: AppColors.textSecondary),
+                      style: TextStyle(color: colors.textSecondary),
                     ),
                     if (msg.$3 != null)
                       TextSpan(
@@ -164,7 +165,7 @@ class _HomeScreenState extends State<HomeScreen>
                   decoration: BoxDecoration(
                     color: i == _proofIndex
                         ? AppColors.primary
-                        : AppColors.border,
+                        : colors.border,
                     borderRadius: BorderRadius.circular(3),
                   ),
                 );
@@ -177,10 +178,11 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Widget _buildAppBar() {
+    final colors = context.appColors;
     return SliverAppBar(
       floating: true,
       snap: true,
-      backgroundColor: AppColors.background,
+      backgroundColor: colors.appBarBackground,
       elevation: _showElevation ? 4 : 0,
       shadowColor: Colors.black,
       title: Row(
@@ -207,17 +209,17 @@ class _HomeScreenState extends State<HomeScreen>
           ),
           const SizedBox(width: 10),
           RichText(
-            text: const TextSpan(
+            text: TextSpan(
               children: [
                 TextSpan(
                   text: 'Achados',
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w900,
-                    color: AppColors.textPrimary,
+                    color: colors.textPrimary,
                   ),
                 ),
-                TextSpan(
+                const TextSpan(
                   text: 'BR',
                   style: TextStyle(
                     fontSize: 22,
@@ -241,7 +243,7 @@ class _HomeScreenState extends State<HomeScreen>
           icon: Stack(
             clipBehavior: Clip.none,
             children: [
-              const Icon(Icons.notifications_outlined, color: AppColors.textPrimary),
+              Icon(Icons.notifications_outlined, color: colors.textPrimary),
               Positioned(
                 right: -2,
                 top: -2,
@@ -587,6 +589,7 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Widget _buildDealsCount() {
+    final colors = context.appColors;
     return SliverToBoxAdapter(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
@@ -594,17 +597,17 @@ class _HomeScreenState extends State<HomeScreen>
           children: [
             Text(
               '${filteredDeals.length} achados encontrados',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textMuted,
+                color: colors.textMuted,
               ),
             ),
             const Spacer(),
-            const Icon(
+            Icon(
               Icons.tune_rounded,
               size: 18,
-              color: AppColors.textMuted,
+              color: colors.textMuted,
             ),
           ],
         ),

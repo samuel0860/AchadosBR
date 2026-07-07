@@ -141,6 +141,22 @@ const List<StoreBrand> kStoreBrands = [
     textColor: Colors.white,
     logoAsset: 'assets/icons/stores/outros.png',
   ),
+  StoreBrand(
+    id: 'kabum',
+    name: 'Kabum',
+    emoji: 'K',
+    primaryColor: Color(0xFFFC6B0F),
+    textColor: Colors.white,
+    logoAsset: 'assets/icons/stores/kabum.png',
+  ),
+  StoreBrand(
+    id: 'epocacosmeticos',
+    name: 'Época Cosméticos',
+    emoji: 'EC',
+    primaryColor: Color(0xFFEE1166),
+    textColor: Colors.white,
+    logoAsset: 'assets/icons/stores/epocacosmeticos.png',
+  ),
 ];
 
 /// Busca uma loja pelo ID
@@ -148,6 +164,20 @@ StoreBrand? findStoreBrand(String? id) {
   if (id == null || id.isEmpty) return null;
   try {
     return kStoreBrands.firstWhere((s) => s.id == id);
+  } catch (_) {
+    return null;
+  }
+}
+
+/// Busca uma loja pelo nome
+StoreBrand? findStoreBrandByName(String? name) {
+  if (name == null || name.isEmpty) return null;
+  try {
+    return kStoreBrands.firstWhere(
+      (s) => s.name.toLowerCase() == name.toLowerCase() || 
+             s.name.toLowerCase().contains(name.toLowerCase()) ||
+             name.toLowerCase().contains(s.name.toLowerCase()),
+    );
   } catch (_) {
     return null;
   }

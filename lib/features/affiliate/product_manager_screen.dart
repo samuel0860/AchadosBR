@@ -244,21 +244,24 @@ class _ProductManagerScreenState extends State<ProductManagerScreen> {
                           color: AppColors.savings),
                     ),
                     const SizedBox(width: 8),
-                    Text(
-                      'R\$ ${product.originalPrice.toStringAsFixed(2).replaceAll('.', ',')}',
-                      style: const TextStyle(
-                          fontSize: 12,
-                          color: AppColors.textMuted,
-                          decoration: TextDecoration.lineThrough),
-                    ),
-                    const Spacer(),
-                    Text(
-                      'Economia de R\$ ${product.savings.toStringAsFixed(2).replaceAll('.', ',')}',
-                      style: TextStyle(
-                          fontSize: 11,
-                          color: AppColors.savings.withValues(alpha: 0.8)),
+                    Flexible(
+                      child: Text(
+                        'R\$ ${product.originalPrice.toStringAsFixed(2).replaceAll('.', ',')}',
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                            fontSize: 12,
+                            color: AppColors.textMuted,
+                            decoration: TextDecoration.lineThrough),
+                      ),
                     ),
                   ],
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Economia de R\$ ${product.savings.toStringAsFixed(2).replaceAll('.', ',')}',
+                  style: TextStyle(
+                      fontSize: 11,
+                      color: AppColors.savings.withValues(alpha: 0.8)),
                 ),
                 const SizedBox(height: 12),
                 // Action buttons
@@ -296,11 +299,14 @@ class _ProductManagerScreenState extends State<ProductManagerScreen> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    _buildActionButton(
-                      label: '',
-                      icon: Icons.delete_outline_rounded,
-                      color: AppColors.hot,
-                      onTap: () => _confirmDelete(context, product),
+                    SizedBox(
+                      width: 44,
+                      child: _buildActionButton(
+                        label: '',
+                        icon: Icons.delete_outline_rounded,
+                        color: AppColors.hot,
+                        onTap: () => _confirmDelete(context, product),
+                      ),
                     ),
                   ],
                 ),

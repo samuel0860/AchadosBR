@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../app/theme.dart';
 import '../../models/deal.dart';
+import '../../models/store_brand.dart';
+import '../../data/mock_affiliates.dart';
 import '../../features/deal_detail/deal_detail_screen.dart';
 
 class DealCard extends StatefulWidget {
@@ -172,47 +174,98 @@ class _DealCardState extends State<DealCard> {
     return Row(
       children: [
         // Store logo mini
+        StoreLogo(
+          store: findStoreBrandByName(deal.store) ??
+              StoreBrand(
+                id: 'custom',
+                name: deal.store,
+                emoji: deal.store.isNotEmpty ? deal.store[0].toUpperCase() : '?',
+                primaryColor: AppColors.primary,
+                textColor: Colors.white,
+              ),
+          size: 20,
+          borderRadius: BorderRadius.circular(4),
+        ),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: Text(
+                  deal.store,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textSecondary,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 4),
+              const Icon(Icons.verified_rounded, size: 12, color: AppColors.verified),
+            ],
+          ),
+        ),
+        _buildAffiliateAvatar(deal),
+      ],
+    );
+  }
+
+  Widget _buildAffiliateAvatar(Deal deal) {
+    final affiliate = deal.affiliateId.isNotEmpty
+        ? findAffiliateById(deal.affiliateId)
+        : findAffiliateByName(deal.postedBy);
+
+    final name = affiliate?.name ?? deal.postedBy;
+    final colorHex = affiliate?.themeColorHex ?? '#7C3AED';
+
+    Color themeColor;
+    try {
+      themeColor = Color(int.parse('FF${colorHex.replaceAll('#', '')}', radix: 16));
+    } catch (_) {
+      themeColor = AppColors.primary;
+    }
+
+    final initial = name.isNotEmpty ? name[0].toUpperCase() : 'A';
+
+    return Row(
+      children: [
+        Text(
+          name,
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textSecondary.withValues(alpha: 0.8),
+          ),
+        ),
+        const SizedBox(width: 4),
         Container(
           width: 20,
           height: 20,
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(4),
+            color: themeColor,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: themeColor.withValues(alpha: 0.4),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: Image.network(
-              deal.storeLogoUrl,
-              fit: BoxFit.contain,
-              errorBuilder: (context, url, error) => Center(
-                child: Text(
-                  deal.store[0],
-                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.primary),
-                ),
+          child: Center(
+            child: Text(
+              initial,
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w900,
+                color: Colors.white,
               ),
             ),
           ),
         ),
-        const SizedBox(width: 6),
-        Expanded(
-          child: Text(
-            deal.store,
-            style: const TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textSecondary,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-        if (deal.isHot)
-          _buildIconBadge(
-            Icons.local_fire_department_rounded,
-            'HOT',
-            AppColors.hot,
-            AppColors.hot.withValues(alpha: 0.15),
-          ),
       ],
     );
   }

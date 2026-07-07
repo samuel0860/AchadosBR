@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import '../../app/theme.dart';
+import '../../data/mock_affiliates.dart';
 import '../../models/deal.dart';
+import '../../models/store_brand.dart';
 import '../../services/user_data_service.dart';
+import '../affiliate/affiliate_page_screen.dart';
 import '../review/reviews_section.dart';
 
 class DealDetailScreen extends StatefulWidget {
@@ -42,9 +45,10 @@ class _DealDetailScreenState extends State<DealDetailScreen> {
       symbol: 'R\$',
       decimalDigits: 2,
     );
+    final colors = context.appColors;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: colors.background,
       body: CustomScrollView(
         slivers: [
           _buildSliverAppBar(deal),
@@ -69,6 +73,8 @@ class _DealDetailScreenState extends State<DealDetailScreen> {
                   _buildDescription(deal),
                   const SizedBox(height: 16),
                   _buildVotingSection(deal),
+                  const SizedBox(height: 16),
+                  _buildAffiliateCard(deal),
                   const SizedBox(height: 8),
                 ],
               ),
@@ -85,10 +91,11 @@ class _DealDetailScreenState extends State<DealDetailScreen> {
   }
 
   Widget _buildSliverAppBar(Deal deal) {
+    final colors = context.appColors;
     return SliverAppBar(
       expandedHeight: 280,
       pinned: true,
-      backgroundColor: AppColors.background,
+      backgroundColor: colors.background,
       leading: GestureDetector(
         onTap: () => Navigator.pop(context),
         child: Container(
@@ -202,33 +209,24 @@ class _DealDetailScreenState extends State<DealDetailScreen> {
   Widget _buildStoreBadge(Deal deal) {
     return Row(
       children: [
-        Container(
-          width: 28,
-          height: 28,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(7),
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(7),
-            child: Image.network(
-              deal.storeLogoUrl,
-              fit: BoxFit.contain,
-              errorBuilder: (ctx, err, stack) => Center(
-                child: Text(deal.store[0],
-                    style: const TextStyle(fontWeight: FontWeight.bold)),
+        StoreLogo(
+          store: findStoreBrandByName(deal.store) ??
+              StoreBrand(
+                id: 'custom',
+                name: deal.store,
+                emoji: deal.store.isNotEmpty ? deal.store[0].toUpperCase() : '?',
+                primaryColor: AppColors.primary,
+                textColor: Colors.white,
               ),
-            ),
-          ),
+          size: 28,
+          borderRadius: BorderRadius.circular(7),
         ),
         const SizedBox(width: 8),
         Text(deal.store,
             style: const TextStyle(
                 fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.primary)),
-        if (deal.isVerified) ...[
-          const SizedBox(width: 4),
-          const Icon(Icons.verified_rounded, size: 14, color: AppColors.verified),
-        ],
+        const SizedBox(width: 4),
+        const Icon(Icons.verified_rounded, size: 14, color: AppColors.verified),
         const Spacer(),
         Text('por ${deal.postedBy}',
             style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
@@ -479,11 +477,13 @@ class _DealDetailScreenState extends State<DealDetailScreen> {
   }
 
   Widget _buildBottomBar(Deal deal, NumberFormat currencyFormatter) {
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+    final colors = context.appColors;
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+      padding: EdgeInsets.fromLTRB(16, 12, 16, 12 + bottomPadding),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        border: const Border(top: BorderSide(color: AppColors.border)),
+        color: colors.surface,
+        border: Border(top: BorderSide(color: colors.border)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.3),
@@ -498,8 +498,8 @@ class _DealDetailScreenState extends State<DealDetailScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Preço atual',
-                  style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
+              Text('Preço atual',
+                  style: TextStyle(fontSize: 11, color: colors.textMuted)),
               Text(
                 currencyFormatter.format(deal.dealPrice),
                 style: const TextStyle(
@@ -547,4 +547,230 @@ class _DealDetailScreenState extends State<DealDetailScreen> {
     if (diff.inHours < 24) return 'Expira em ${diff.inHours}h';
     return 'Expira em ${diff.inDays}d';
   }
+
+  // ─── Card do Afiliado ──────────────────────────────────────────────────────
+
+  Widget _buildAffiliateCard(Deal deal) {
+    final colors = context.appColors;
+
+    // Tenta encontrar o afiliado pelo ID primeiro, depois pelo nome
+    final affiliate = deal.affiliateId.isNotEmpty
+        ? findAffiliateById(deal.affiliateId)
+        : findAffiliateByName(deal.postedBy);
+
+    // Se não encontrar dados, usa o postedBy como nome simples
+    final name = affiliate?.name ?? deal.postedBy;
+    final bio = affiliate?.bio ?? 'Afiliado verificado AchadosBR';
+    final colorHex = affiliate?.themeColorHex ?? '#7C3AED';
+    final totalDeals = affiliate?.totalDeals ?? 0;
+    final rating = affiliate?.rating ?? 4.5;
+
+    Color themeColor;
+    try {
+      themeColor = Color(
+          int.parse('FF${colorHex.replaceAll('#', '')}', radix: 16));
+    } catch (_) {
+      themeColor = AppColors.primary;
+    }
+
+    final initial = name.isNotEmpty ? name[0].toUpperCase() : 'A';
+
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => AffiliatePageScreen(
+              affiliateId: deal.affiliateId.isNotEmpty
+                  ? deal.affiliateId
+                  : 'affiliate_${deal.postedBy.toLowerCase()}',
+              affiliateName: name,
+              isOwner: false,
+            ),
+          ),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: colors.surfaceElevated,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: themeColor.withValues(alpha: 0.3)),
+          boxShadow: [
+            BoxShadow(
+              color: themeColor.withValues(alpha: 0.08),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Label
+            Row(
+              children: [
+                Icon(Icons.storefront_rounded,
+                    size: 13, color: themeColor),
+                const SizedBox(width: 5),
+                Text(
+                  'PUBLICADO POR',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: themeColor,
+                    letterSpacing: 1,
+                  ),
+                ),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: themeColor.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text('⭐', style: TextStyle(fontSize: 10)),
+                      const SizedBox(width: 3),
+                      Text(
+                        rating.toStringAsFixed(1),
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          color: themeColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            // Avatar + info
+            Row(
+              children: [
+                // Avatar circular com inicial e cor temática
+                Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        themeColor,
+                        themeColor.withValues(alpha: 0.7),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: themeColor.withValues(alpha: 0.4),
+                        blurRadius: 10,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                    border: Border.all(
+                        color: colors.background, width: 2),
+                  ),
+                  child: Center(
+                    child: Text(
+                      initial,
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 14),
+
+                // Nome + bio
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            name,
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                              color: colors.textPrimary,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        bio,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: colors.textSecondary,
+                          height: 1.3,
+                        ),
+                      ),
+                      if (totalDeals > 0) ...[
+                        const SizedBox(height: 5),
+                        Text(
+                          '$totalDeals ofertas publicadas',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: colors.textMuted,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 14),
+
+            // Botão ver vitrine
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 11),
+              decoration: BoxDecoration(
+                color: themeColor.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                    color: themeColor.withValues(alpha: 0.3)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.storefront_rounded,
+                      size: 16, color: themeColor),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Ver Vitrine do Afiliado',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: themeColor,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Icon(Icons.arrow_forward_rounded,
+                      size: 14, color: themeColor),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
+

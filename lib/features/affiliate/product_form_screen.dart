@@ -31,7 +31,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   late String _highlightColor = widget.product?.highlightColor ?? '#EF4444';
   late String _category = widget.product?.category ?? 'eletronicos';
   late bool _hasFreeShipping = widget.product?.hasFreeShipping ?? false;
-  late String _imageAsset = widget.product?.imageUrl ?? '';
+  late List<String> _imageAssets = List<String>.from(widget.product?.imageUrls ?? []);
   late String _selectedStoreId = widget.product?.storeId ?? '';
 
   bool _isLoading = false;
@@ -87,7 +87,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
       originalPrice: origPrice,
       discountPercent: discount,
       badgePosition: _badgePosition,
-      imageUrl: _imageAsset,
+      imageUrls: _imageAssets,
       highlightColor: _highlightColor,
       isActive: widget.product?.isActive ?? true,
       affiliateId: user?.id ?? '',
@@ -391,10 +391,10 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
         child: Stack(
           children: [
             // Imagem de fundo
-            if (_imageAsset.isNotEmpty)
+            if (_imageAssets.isNotEmpty)
               Positioned.fill(
                 child: Image.asset(
-                  _imageAsset,
+                  _imageAssets.first,
                   fit: BoxFit.cover,
                   errorBuilder: (_, __, ___) => const Center(
                     child: Icon(Icons.image_rounded,
@@ -417,7 +417,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                 ),
               ),
             // Selo de desconto
-            if (_imageAsset.isNotEmpty)
+            if (_imageAssets.isNotEmpty)
               Positioned.fill(
                 child: Align(
                   alignment: _badgePosition.alignment,
@@ -524,50 +524,183 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   // ─── Image Picker ──────────────────────────────────────────────────────────
 
   Widget _buildImagePicker() {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: _imageOptions.map((item) {
-        final (path, label) = item;
-        final isSelected = _imageAsset == path;
-        return GestureDetector(
-          onTap: () => setState(() => _imageAsset = path),
-          child: Column(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Imagens selecionadas
+        if (_imageAssets.isNotEmpty) ...[
+          Row(
             children: [
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                width: 70,
-                height: 70,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: isSelected ? AppColors.primary : AppColors.border,
-                    width: isSelected ? 2.5 : 1,
-                  ),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(9),
-                  child: Image.asset(path,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => const Icon(
-                          Icons.image_rounded,
-                          color: AppColors.textMuted)),
-                ),
-              ),
-              const SizedBox(height: 4),
               Text(
-                label,
-                style: TextStyle(
-                    fontSize: 9,
-                    color: isSelected
-                        ? AppColors.primary
-                        : AppColors.textMuted),
-                textAlign: TextAlign.center,
+                '${_imageAssets.length} imagem(ns) selecionada(s)',
+                style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
               ),
+              const Spacer(),
+              if (_imageAssets.length > 1)
+                const Text(
+                  'Arraste para reordenar',
+                  style: TextStyle(fontSize: 10, color: AppColors.textMuted),
+                ),
             ],
           ),
-        );
-      }).toList(),
+          const SizedBox(height: 8),
+          SizedBox(
+            height: 76,
+            child: ReorderableListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: _imageAssets.length,
+              buildDefaultDragHandles: true,
+              onReorderItem: (oldIndex, newIndex) {
+                setState(() {
+                  final item = _imageAssets.removeAt(oldIndex);
+                  _imageAssets.insert(newIndex, item);
+                });
+              },
+              itemBuilder: (context, i) {
+                final path = _imageAssets[i];
+                return Stack(
+                  key: ValueKey(path + i.toString()),
+                  children: [
+                    Container(
+                      width: 70,
+                      height: 70,
+                      margin: const EdgeInsets.only(right: 8),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: i == 0 ? AppColors.primary : AppColors.border,
+                          width: i == 0 ? 2.5 : 1,
+                        ),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(9),
+                        child: Image.asset(path,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => const Icon(
+                                Icons.image_rounded,
+                                color: AppColors.textMuted)),
+                      ),
+                    ),
+                    Positioned(
+                      top: 0,
+                      right: 8,
+                      child: GestureDetector(
+                        onTap: () => setState(() => _imageAssets.remove(path)),
+                        child: Container(
+                          width: 18,
+                          height: 18,
+                          decoration: const BoxDecoration(
+                            color: AppColors.hot,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.close_rounded,
+                              color: Colors.white, size: 12),
+                        ),
+                      ),
+                    ),
+                    if (i == 0)
+                      Positioned(
+                        bottom: 2,
+                        left: 2,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: const Text('Capa',
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 8,
+                                  fontWeight: FontWeight.w700)),
+                        ),
+                      ),
+                  ],
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
+        // Grade de seleção
+        const Text(
+          'Toque para adicionar (máx. 5)',
+          style: TextStyle(fontSize: 11, color: AppColors.textMuted),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: _imageOptions.map((item) {
+            final (path, label) = item;
+            final isSelected = _imageAssets.contains(path);
+            return GestureDetector(
+              onTap: () {
+                setState(() {
+                  if (isSelected) {
+                    _imageAssets.remove(path);
+                  } else if (_imageAssets.length < 5) {
+                    _imageAssets.add(path);
+                  }
+                });
+              },
+              child: Column(
+                children: [
+                  Stack(
+                    children: [
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        width: 70,
+                        height: 70,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: isSelected ? AppColors.primary : AppColors.border,
+                            width: isSelected ? 2.5 : 1,
+                          ),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(9),
+                          child: Image.asset(path,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => const Icon(
+                                  Icons.image_rounded,
+                                  color: AppColors.textMuted)),
+                        ),
+                      ),
+                      if (isSelected)
+                        Positioned(
+                          top: 4,
+                          right: 4,
+                          child: Container(
+                            width: 18,
+                            height: 18,
+                            decoration: const BoxDecoration(
+                              color: AppColors.primary,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.check_rounded,
+                                color: Colors.white, size: 12),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    label,
+                    style: TextStyle(
+                        fontSize: 9,
+                        color: isSelected
+                            ? AppColors.primary
+                            : AppColors.textMuted),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+        ),
+      ],
     );
   }
 

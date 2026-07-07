@@ -37,7 +37,7 @@ class AffiliateProduct {
   final double originalPrice;
   final double discountPercent;
   final BadgePosition badgePosition;
-  final String imageUrl;
+  final List<String> imageUrls;  // Lista de imagens (suporta múltiplas)
   final String highlightColor; // hex
   final bool isActive;
   final String affiliateId;
@@ -48,7 +48,10 @@ class AffiliateProduct {
   final String category;
   final bool hasFreeShipping;
 
-  const AffiliateProduct({
+  /// Retorna a primeira imagem (compatibilidade com código legado)
+  String get imageUrl => imageUrls.isNotEmpty ? imageUrls.first : '';
+
+  AffiliateProduct({
     required this.id,
     required this.title,
     required this.description,
@@ -56,7 +59,8 @@ class AffiliateProduct {
     required this.originalPrice,
     required this.discountPercent,
     this.badgePosition = BadgePosition.topLeft,
-    required this.imageUrl,
+    List<String>? imageUrls,
+    String? imageUrl,  // aceita imageUrl legado
     this.highlightColor = '#7C3AED',
     this.isActive = true,
     required this.affiliateId,
@@ -66,7 +70,7 @@ class AffiliateProduct {
     this.storeId = '',
     this.category = 'outros',
     this.hasFreeShipping = false,
-  });
+  }) : imageUrls = imageUrls ?? (imageUrl != null ? [imageUrl] : const []);
 
   double get savings => originalPrice - price;
 
@@ -78,7 +82,8 @@ class AffiliateProduct {
         'originalPrice': originalPrice,
         'discountPercent': discountPercent,
         'badgePosition': badgePosition.name,
-        'imageUrl': imageUrl,
+        'imageUrls': imageUrls,
+        'imageUrl': imageUrls.isNotEmpty ? imageUrls.first : '',
         'highlightColor': highlightColor,
         'isActive': isActive,
         'affiliateId': affiliateId,
@@ -90,8 +95,15 @@ class AffiliateProduct {
         'hasFreeShipping': hasFreeShipping,
       };
 
-  factory AffiliateProduct.fromJson(Map<String, dynamic> map) =>
-      AffiliateProduct(
+  factory AffiliateProduct.fromJson(Map<String, dynamic> map) {
+    // Suporta tanto imageUrls (lista) quanto imageUrl (legado)
+    List<String> urls = [];
+    if (map['imageUrls'] is List) {
+      urls = List<String>.from(map['imageUrls'] as List);
+    } else if (map['imageUrl'] is String && (map['imageUrl'] as String).isNotEmpty) {
+      urls = [map['imageUrl'] as String];
+    }
+    return AffiliateProduct(
         id: map['id']?.toString() ?? '',
         title: map['title']?.toString() ?? '',
         description: map['description']?.toString() ?? '',
@@ -102,7 +114,7 @@ class AffiliateProduct {
           (b) => b.name == map['badgePosition'],
           orElse: () => BadgePosition.topLeft,
         ),
-        imageUrl: map['imageUrl']?.toString() ?? '',
+        imageUrls: urls,
         highlightColor: map['highlightColor']?.toString() ?? '#7C3AED',
         isActive: map['isActive'] == true,
         affiliateId: map['affiliateId']?.toString() ?? '',
@@ -113,7 +125,8 @@ class AffiliateProduct {
         storeId: map['storeId']?.toString() ?? '',
         category: map['category']?.toString() ?? 'outros',
         hasFreeShipping: map['hasFreeShipping'] == true,
-      );
+    );
+  }
 
   AffiliateProduct copyWith({
     String? title,
@@ -122,7 +135,7 @@ class AffiliateProduct {
     double? originalPrice,
     double? discountPercent,
     BadgePosition? badgePosition,
-    String? imageUrl,
+    List<String>? imageUrls,
     String? highlightColor,
     bool? isActive,
     String? couponCode,
@@ -139,7 +152,7 @@ class AffiliateProduct {
         originalPrice: originalPrice ?? this.originalPrice,
         discountPercent: discountPercent ?? this.discountPercent,
         badgePosition: badgePosition ?? this.badgePosition,
-        imageUrl: imageUrl ?? this.imageUrl,
+        imageUrls: imageUrls ?? this.imageUrls,
         highlightColor: highlightColor ?? this.highlightColor,
         isActive: isActive ?? this.isActive,
         affiliateId: affiliateId,
