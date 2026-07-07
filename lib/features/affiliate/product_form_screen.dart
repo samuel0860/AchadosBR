@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../app/theme.dart';
@@ -36,7 +37,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
 
   bool _isLoading = false;
 
-  static const _colorOptions = [
+  final _colorOptions = [
     ('#EF4444', 'Vermelho'),
     ('#7C3AED', 'Roxo'),
     ('#10B981', 'Verde'),
@@ -47,14 +48,8 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     ('#F97316', 'Laranja'),
   ];
 
-  static const _imageOptions = [
-    ('assets/images/iphone_15_pro.png', 'iPhone 15 Pro'),
-    ('assets/images/ps5_console.png', 'PS5'),
-    ('assets/images/galaxy_tab_s9.png', 'Galaxy Tab'),
-    ('assets/images/nike_air_max.png', 'Nike Air Max'),
-    ('assets/images/air_fryer.png', 'Air Fryer'),
-    ('assets/images/perfumes_kit.png', 'Kit de Perfumes'),
-  ];
+  // MethodChannel para galeria nativa do Android
+  static const _galleryChannel = MethodChannel('com.achadosapp/gallery');
 
   @override
   void dispose() {
@@ -378,172 +373,332 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     final color = _hexColor(_highlightColor);
     final discount = _discountCtrl.text.isEmpty ? '0' : _discountCtrl.text;
     final store = findStoreBrand(_selectedStoreId);
+    final firstImage = _imageAssets.isNotEmpty ? _imageAssets.first : null;
 
-    return Container(
-      height: 180,
-      decoration: BoxDecoration(
-        color: AppColors.surfaceElevated,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(15),
-        child: Stack(
+    Widget imageWidget;
+    if (firstImage != null) {
+      if (firstImage.startsWith('assets/')) {
+        imageWidget = Image.asset(firstImage, fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => const Center(
+                child: Icon(Icons.image_rounded, size: 48, color: AppColors.textMuted)));
+      } else {
+        imageWidget = Image.file(File(firstImage), fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => const Center(
+                child: Icon(Icons.image_rounded, size: 48, color: AppColors.textMuted)));
+      }
+    } else {
+      imageWidget = const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Imagem de fundo
-            if (_imageAssets.isNotEmpty)
-              Positioned.fill(
-                child: Image.asset(
-                  _imageAssets.first,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => const Center(
-                    child: Icon(Icons.image_rounded,
-                        size: 48, color: AppColors.textMuted),
+            Icon(Icons.image_rounded, size: 48, color: AppColors.textMuted),
+            SizedBox(height: 8),
+            Text('Preview da imagem',
+                style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
+          ],
+        ),
+      );
+    }
+
+    return GestureDetector(
+      onTap: _imageAssets.length < 5 ? _pickFromGallery : null,
+      child: Container(
+        height: 180,
+        decoration: BoxDecoration(
+          color: AppColors.surfaceElevated,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: _imageAssets.isEmpty
+                ? AppColors.primary.withValues(alpha: 0.4)
+                : AppColors.border,
+          ),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(15),
+          child: Stack(
+            children: [
+              Positioned.fill(child: imageWidget),
+              // Ícone de adicionar imagem quando vazio
+              if (firstImage == null)
+                Positioned(
+                  top: 10, right: 10,
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppColors.primary.withValues(alpha: 0.4)),
+                    ),
+                    child: const Icon(Icons.add_photo_alternate_rounded,
+                        size: 18, color: AppColors.primary),
                   ),
                 ),
-              )
-            else
-              const Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.image_rounded,
-                        size: 48, color: AppColors.textMuted),
-                    SizedBox(height: 8),
-                    Text('Preview da imagem',
-                        style: TextStyle(
-                            color: AppColors.textMuted, fontSize: 12)),
-                  ],
-                ),
-              ),
-            // Selo de desconto
-            if (_imageAssets.isNotEmpty)
-              Positioned.fill(
-                child: Align(
-                  alignment: _badgePosition.alignment,
-                  child: Padding(
-                    padding: const EdgeInsets.all(10),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: color,
-                        borderRadius: BorderRadius.circular(10),
-                        boxShadow: [
-                          BoxShadow(
-                              color: color.withValues(alpha: 0.5),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2)),
-                        ],
-                      ),
-                      child: Text(
-                        '-$discount%',
-                        style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.white),
+              // Selo de desconto
+              if (firstImage != null)
+                Positioned.fill(
+                  child: Align(
+                    alignment: _badgePosition.alignment,
+                    child: Padding(
+                      padding: const EdgeInsets.all(10),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: color,
+                          borderRadius: BorderRadius.circular(10),
+                          boxShadow: [
+                            BoxShadow(color: color.withValues(alpha: 0.5), blurRadius: 8, offset: const Offset(0, 2)),
+                          ],
+                        ),
+                        child: Text('-$discount%',
+                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.white)),
                       ),
                     ),
                   ),
                 ),
-              ),
-            // Badge da loja no preview (logo real)
-            if (store != null)
+              // Badge da loja
+              if (store != null)
+                Positioned(
+                  top: 8, left: 8,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.6),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        StoreLogo(store: store, size: 18, borderRadius: BorderRadius.circular(4)),
+                        const SizedBox(width: 5),
+                        Text(store.name, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.white)),
+                      ],
+                    ),
+                  ),
+                ),
+              // Label de preview
               Positioned(
-                top: 8,
-                left: 8,
+                bottom: 0, left: 0, right: 0,
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.6),
-                    borderRadius: BorderRadius.circular(8),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.3),
-                        blurRadius: 6,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter, end: Alignment.bottomCenter,
+                      colors: [Colors.transparent, Colors.black.withValues(alpha: 0.7)],
+                    ),
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      StoreLogo(
-                        store: store,
-                        size: 18,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      const SizedBox(width: 5),
-                      Text(
-                        store.name,
-                        style: const TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            // Label de preview
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.transparent,
-                      Colors.black.withValues(alpha: 0.7),
-                    ],
-                  ),
-                ),
-                child: const Text(
-                  '← Preview em tempo real →',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                      color: Colors.white70,
+                  child: Text(
+                    firstImage == null
+                        ? 'Toque para adicionar foto'
+                        : '← Preview em tempo real →',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: firstImage == null
+                          ? AppColors.primary.withValues(alpha: 0.9)
+                          : Colors.white70,
                       fontSize: 11,
-                      fontWeight: FontWeight.w600),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 
-  // ─── Image Picker ──────────────────────────────────────────────────────────
+  // ─── Image Picker ─────────────────────────────────────────────────────────
+
+  Future<void> _pickFromGallery() async {
+    try {
+      final remaining = 5 - _imageAssets.length;
+      if (remaining <= 0) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Máximo de 5 imagens atingido.'),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+        return;
+      }
+
+      final List<dynamic>? paths = await _galleryChannel.invokeMethod('pickImages');
+      if (paths != null && paths.isNotEmpty) {
+        setState(() {
+          for (final p in paths) {
+            if (_imageAssets.length < 5) _imageAssets.add(p as String);
+          }
+        });
+      }
+    } on PlatformException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro ao acessar galeria: ${e.message}'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro inesperado: $e'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _pickFromCamera() async {
+    // Câmera via galeria nativa — na versão sem image_picker, abrimos galeria
+    await _pickFromGallery();
+  }
+
+  Widget _buildImageItem(String path, int i) {
+    Widget thumb;
+    if (path.startsWith('assets/')) {
+      thumb = Image.asset(path, fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) =>
+              const Icon(Icons.image_rounded, color: AppColors.textMuted));
+    } else {
+      thumb = Image.file(File(path), fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) =>
+              const Icon(Icons.image_rounded, color: AppColors.textMuted));
+    }
+
+    return Stack(
+      key: ValueKey(path + i.toString()),
+      children: [
+        Container(
+          width: 70, height: 70,
+          margin: const EdgeInsets.only(right: 8),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: i == 0 ? AppColors.primary : AppColors.border,
+              width: i == 0 ? 2.5 : 1,
+            ),
+          ),
+          child: ClipRRect(borderRadius: BorderRadius.circular(9), child: thumb),
+        ),
+        Positioned(
+          top: 0, right: 8,
+          child: GestureDetector(
+            onTap: () => setState(() => _imageAssets.removeAt(i)),
+            child: Container(
+              width: 18, height: 18,
+              decoration: const BoxDecoration(color: AppColors.hot, shape: BoxShape.circle),
+              child: const Icon(Icons.close_rounded, color: Colors.white, size: 12),
+            ),
+          ),
+        ),
+        if (i == 0)
+          Positioned(
+            bottom: 2, left: 2,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+              decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(4)),
+              child: const Text('Capa',
+                  style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.w700)),
+            ),
+          ),
+      ],
+    );
+  }
 
   Widget _buildImagePicker() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Imagens selecionadas
-        if (_imageAssets.isNotEmpty) ...[
-          Row(
-            children: [
-              Text(
-                '${_imageAssets.length} imagem(ns) selecionada(s)',
-                style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
-              ),
-              const Spacer(),
-              if (_imageAssets.length > 1)
-                const Text(
-                  'Arraste para reordenar',
-                  style: TextStyle(fontSize: 10, color: AppColors.textMuted),
+        // ─── Botões de ação ───────────────────────────────────────────────
+        Row(
+          children: [
+            Expanded(
+              child: GestureDetector(
+                onTap: _imageAssets.length < 5 ? _pickFromGallery : null,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceElevated,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: _imageAssets.length < 5
+                          ? AppColors.primary.withValues(alpha: 0.5)
+                          : AppColors.border,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.photo_library_rounded, size: 20,
+                          color: _imageAssets.length < 5
+                              ? AppColors.primary
+                              : AppColors.textMuted),
+                      const SizedBox(width: 8),
+                      Text('Galeria',
+                          style: TextStyle(
+                            fontSize: 13, fontWeight: FontWeight.w700,
+                            color: _imageAssets.length < 5
+                                ? AppColors.primary
+                                : AppColors.textMuted,
+                          )),
+                    ],
+                  ),
                 ),
-            ],
-          ),
-          const SizedBox(height: 8),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: GestureDetector(
+                onTap: _imageAssets.length < 5 ? _pickFromCamera : null,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceElevated,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: _imageAssets.length < 5
+                          ? AppColors.primary.withValues(alpha: 0.5)
+                          : AppColors.border,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.camera_alt_rounded, size: 20,
+                          color: _imageAssets.length < 5
+                              ? AppColors.primary
+                              : AppColors.textMuted),
+                      const SizedBox(width: 8),
+                      Text('Câmera',
+                          style: TextStyle(
+                            fontSize: 13, fontWeight: FontWeight.w700,
+                            color: _imageAssets.length < 5
+                                ? AppColors.primary
+                                : AppColors.textMuted,
+                          )),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Text(
+          _imageAssets.isEmpty
+              ? 'Nenhuma imagem selecionada (máx. 5)'
+              : '${_imageAssets.length}/5 imagem(ns) • Toque no ✕ para remover',
+          style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+        ),
+        // ─── Thumbs das imagens selecionadas ─────────────────────────────
+        if (_imageAssets.isNotEmpty) ...[
+          const SizedBox(height: 10),
           SizedBox(
             height: 76,
             child: ReorderableListView.builder(
@@ -556,150 +711,13 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                   _imageAssets.insert(newIndex, item);
                 });
               },
-              itemBuilder: (context, i) {
-                final path = _imageAssets[i];
-                return Stack(
-                  key: ValueKey(path + i.toString()),
-                  children: [
-                    Container(
-                      width: 70,
-                      height: 70,
-                      margin: const EdgeInsets.only(right: 8),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: i == 0 ? AppColors.primary : AppColors.border,
-                          width: i == 0 ? 2.5 : 1,
-                        ),
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(9),
-                        child: Image.asset(path,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => const Icon(
-                                Icons.image_rounded,
-                                color: AppColors.textMuted)),
-                      ),
-                    ),
-                    Positioned(
-                      top: 0,
-                      right: 8,
-                      child: GestureDetector(
-                        onTap: () => setState(() => _imageAssets.remove(path)),
-                        child: Container(
-                          width: 18,
-                          height: 18,
-                          decoration: const BoxDecoration(
-                            color: AppColors.hot,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.close_rounded,
-                              color: Colors.white, size: 12),
-                        ),
-                      ),
-                    ),
-                    if (i == 0)
-                      Positioned(
-                        bottom: 2,
-                        left: 2,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                          decoration: BoxDecoration(
-                            color: AppColors.primary,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: const Text('Capa',
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 8,
-                                  fontWeight: FontWeight.w700)),
-                        ),
-                      ),
-                  ],
-                );
-              },
+              itemBuilder: (context, i) => _buildImageItem(_imageAssets[i], i),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 4),
+          const Text('Arraste para reordenar • A primeira é a capa',
+              style: TextStyle(fontSize: 10, color: AppColors.textMuted)),
         ],
-        // Grade de seleção
-        const Text(
-          'Toque para adicionar (máx. 5)',
-          style: TextStyle(fontSize: 11, color: AppColors.textMuted),
-        ),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: _imageOptions.map((item) {
-            final (path, label) = item;
-            final isSelected = _imageAssets.contains(path);
-            return GestureDetector(
-              onTap: () {
-                setState(() {
-                  if (isSelected) {
-                    _imageAssets.remove(path);
-                  } else if (_imageAssets.length < 5) {
-                    _imageAssets.add(path);
-                  }
-                });
-              },
-              child: Column(
-                children: [
-                  Stack(
-                    children: [
-                      AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        width: 70,
-                        height: 70,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: isSelected ? AppColors.primary : AppColors.border,
-                            width: isSelected ? 2.5 : 1,
-                          ),
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(9),
-                          child: Image.asset(path,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => const Icon(
-                                  Icons.image_rounded,
-                                  color: AppColors.textMuted)),
-                        ),
-                      ),
-                      if (isSelected)
-                        Positioned(
-                          top: 4,
-                          right: 4,
-                          child: Container(
-                            width: 18,
-                            height: 18,
-                            decoration: const BoxDecoration(
-                              color: AppColors.primary,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(Icons.check_rounded,
-                                color: Colors.white, size: 12),
-                          ),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    label,
-                    style: TextStyle(
-                        fontSize: 9,
-                        color: isSelected
-                            ? AppColors.primary
-                            : AppColors.textMuted),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            );
-          }).toList(),
-        ),
       ],
     );
   }

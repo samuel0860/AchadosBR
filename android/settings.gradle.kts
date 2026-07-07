@@ -11,9 +11,18 @@ pluginManagement {
     includeBuild("$flutterSdkPath/packages/flutter_tools/gradle")
 
     repositories {
-        google()
-        mavenCentral()
+        google {
+            isAllowInsecureProtocol = true
+        }
+        maven {
+            url = uri("https://dl.google.com/dl/android/maven2/")
+            isAllowInsecureProtocol = true
+        }
+        mavenCentral {
+            isAllowInsecureProtocol = true
+        }
         gradlePluginPortal()
+        mavenLocal()
     }
 }
 
