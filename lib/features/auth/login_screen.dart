@@ -67,7 +67,7 @@ class _LoginScreenState extends State<LoginScreen>
     setState(() => _isLoading = false);
 
     if (success) {
-      // Rota correta baseada no tipo de usuÃ¡rio
+      // Rota correta baseada no tipo de usuário
       final destination = auth.isAffiliate
           ? const AffiliateScaffold()
           : const MainScaffold();
@@ -303,7 +303,7 @@ class _LoginScreenState extends State<LoginScreen>
         Text(
           isAffiliate 
               ? 'Gerencie seus achados e fature com vendas' 
-              : 'Entre para descobrir as melhores promoÃ§Ãµes',
+              : 'Entre para descobrir as melhores promoções',
           textAlign: TextAlign.center,
           style: const TextStyle(
             fontSize: 14,
@@ -329,7 +329,7 @@ class _LoginScreenState extends State<LoginScreen>
             keyboardType: TextInputType.emailAddress,
             validator: (v) {
               if (v == null || v.isEmpty) return 'Informe seu e-mail';
-              if (!v.contains('@')) return 'E-mail invÃ¡lido';
+              if (!v.contains('@')) return 'E-mail inválido';
               return null;
             },
           ),
@@ -653,7 +653,7 @@ class _LoginScreenState extends State<LoginScreen>
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         const Text(
-          'NÃ£o tem uma conta? ',
+          'Não tem uma conta? ',
           style: TextStyle(fontSize: 14, color: AppColors.textMuted),
         ),
         GestureDetector(
@@ -662,7 +662,7 @@ class _LoginScreenState extends State<LoginScreen>
             MaterialPageRoute(builder: (_) => const RegisterScreen()),
           ),
           child: Text(
-            'Cadastre-se grÃ¡tis',
+            'Cadastre-se grátis',
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w700,

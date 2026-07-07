@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../app/theme.dart';
 import '../../features/affiliate/affiliate_screen.dart';
+import '../../features/affiliate/product_manager_screen.dart';
 import '../../features/notifications/notifications_screen.dart';
 import '../../features/profile/profile_screen.dart';
-import '../../features/post_deal/post_deal_screen.dart';
-import '../../services/auth_service.dart';
 import 'affiliate_home_screen.dart';
 
 /// Scaffold exclusivo para usuários AFILIADOS
@@ -19,11 +18,11 @@ class _AffiliateScaffoldState extends State<AffiliateScaffold> {
   int _currentIndex = 0;
 
   final List<Widget> _screens = const [
-    AffiliateHomeScreen(),   // Home do afiliado (stats + achados)
-    AffiliateScreen(),       // Painel completo do afiliado
-    PostDealScreen(),        // Publicar achado
-    NotificationsScreen(),   // Alertas
-    ProfileScreen(),         // Perfil
+    AffiliateHomeScreen(),       // Home do afiliado (stats + achados)
+    AffiliateScreen(),           // Painel completo do afiliado
+    ProductManagerScreen(),      // Gerenciar produtos
+    NotificationsScreen(),       // Alertas
+    ProfileScreen(),             // Perfil
   ];
 
   @override
@@ -128,11 +127,10 @@ class _AffiliateScaffoldState extends State<AffiliateScaffold> {
   }
 
   Widget _buildPublishButton() {
-    final isSelected = _currentIndex == 2;
     return GestureDetector(
       onTap: () => setState(() => _currentIndex = 2),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
           gradient: const LinearGradient(
             colors: [Color(0xFFD4AF37), Color(0xFFC8922A)],
@@ -146,10 +144,24 @@ class _AffiliateScaffoldState extends State<AffiliateScaffold> {
             ),
           ],
         ),
-        child: const Icon(
-          Icons.add_rounded,
-          color: Color(0xFF1A0A00),
-          size: 26,
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.add_rounded,
+              color: Color(0xFF1A0A00),
+              size: 22,
+            ),
+            SizedBox(width: 6),
+            Text(
+              'Novo produto',
+              style: TextStyle(
+                color: Color(0xFF1A0A00),
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
+              ),
+            ),
+          ],
         ),
       ),
     );

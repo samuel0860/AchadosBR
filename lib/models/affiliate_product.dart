@@ -44,6 +44,7 @@ class AffiliateProduct {
   final DateTime createdAt;
   final String? couponCode;
   final String store;
+  final String storeId;   // ID da loja (ex: 'amazon', 'mercadolivre')
   final String category;
   final bool hasFreeShipping;
 
@@ -62,6 +63,7 @@ class AffiliateProduct {
     required this.createdAt,
     this.couponCode,
     this.store = '',
+    this.storeId = '',
     this.category = 'outros',
     this.hasFreeShipping = false,
   });
@@ -83,6 +85,7 @@ class AffiliateProduct {
         'createdAt': createdAt.toIso8601String(),
         'couponCode': couponCode,
         'store': store,
+        'storeId': storeId,
         'category': category,
         'hasFreeShipping': hasFreeShipping,
       };
@@ -107,6 +110,7 @@ class AffiliateProduct {
             DateTime.now(),
         couponCode: map['couponCode']?.toString(),
         store: map['store']?.toString() ?? '',
+        storeId: map['storeId']?.toString() ?? '',
         category: map['category']?.toString() ?? 'outros',
         hasFreeShipping: map['hasFreeShipping'] == true,
       );
@@ -123,6 +127,7 @@ class AffiliateProduct {
     bool? isActive,
     String? couponCode,
     String? store,
+    String? storeId,
     String? category,
     bool? hasFreeShipping,
   }) =>
@@ -141,6 +146,7 @@ class AffiliateProduct {
         createdAt: createdAt,
         couponCode: couponCode ?? this.couponCode,
         store: store ?? this.store,
+        storeId: storeId ?? this.storeId,
         category: category ?? this.category,
         hasFreeShipping: hasFreeShipping ?? this.hasFreeShipping,
       );

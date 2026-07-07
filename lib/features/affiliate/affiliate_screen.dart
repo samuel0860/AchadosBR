@@ -27,7 +27,7 @@ class _AffiliateScreenState extends State<AffiliateScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 5, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
   }
 
   @override
@@ -77,8 +77,6 @@ class _AffiliateScreenState extends State<AffiliateScreen>
         body: TabBarView(
           controller: _tabController,
           children: [
-            _buildDashboard(),
-            _buildSalesTab(),
             _buildLinksAndSalesTab(),
             _buildReportsTab(),
             const ProductManagerScreen(),
@@ -204,8 +202,6 @@ class _AffiliateScreenState extends State<AffiliateScreen>
             borderRadius: BorderRadius.circular(2),
           ),
           tabs: const [
-            Tab(icon: Icon(Icons.dashboard_rounded, size: 18), text: 'Dashboard'),
-            Tab(icon: Icon(Icons.receipt_long_rounded, size: 18), text: 'Vendas'),
             Tab(icon: Icon(Icons.link_rounded, size: 18), text: 'Links & Vendas'),
             Tab(icon: Icon(Icons.bar_chart_rounded, size: 18), text: 'Relatórios'),
             Tab(icon: Icon(Icons.inventory_2_rounded, size: 18), text: 'Produtos'),

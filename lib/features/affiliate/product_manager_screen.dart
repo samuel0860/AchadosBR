@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../app/theme.dart';
 import '../../models/affiliate_product.dart';
+import '../../models/store_brand.dart';
 import '../../services/auth_service.dart';
 import '../../services/product_service.dart';
 import 'product_form_screen.dart';
@@ -148,6 +149,51 @@ class _ProductManagerScreenState extends State<ProductManagerScreen> {
                   ),
                 ),
               ),
+              // Store brand badge
+              Builder(builder: (_) {
+                final brand = findStoreBrand(product.storeId);
+                if (brand == null && product.store.isEmpty) return const SizedBox.shrink();
+                return Positioned(
+                  bottom: 8,
+                  left: 8,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: brand?.primaryColor ?? AppColors.surfaceElevated,
+                      borderRadius: BorderRadius.circular(7),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.3),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          brand?.emoji ?? '🏪',
+                          style: TextStyle(
+                            fontSize: brand != null && brand.emoji.length > 2 ? 8 : 10,
+                            fontWeight: FontWeight.w900,
+                            color: brand?.textColor ?? AppColors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          brand?.name ?? product.store,
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: brand?.textColor ?? AppColors.textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }),
               // Active/inactive badge
               Positioned(
                 top: 8,

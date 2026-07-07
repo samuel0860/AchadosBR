@@ -8,6 +8,7 @@ import '../../shared/widgets/deal_card.dart';
 import '../../features/deal_detail/deal_detail_screen.dart';
 import '../../features/notifications/notifications_screen.dart';
 import '../../features/profile/profile_screen.dart';
+import '../../features/affiliate/product_form_screen.dart';
 
 /// Tela inicial exclusiva para AFILIADOS
 class AffiliateHomeScreen extends StatefulWidget {
@@ -25,10 +26,8 @@ class _AffiliateHomeScreenState extends State<AffiliateHomeScreen> {
   // Carrossel de métricas do afiliado
   int _metricIndex = 0;
   final _metrics = const [
-    _MetricCard('Comissões este mês', 'R\$ 2.340,50', '+12%', Icons.emoji_events_rounded, Color(0xFFD4AF37)),
-    _MetricCard('Vendas realizadas', '148', '+8 hoje', Icons.shopping_cart_checkout_rounded, Color(0xFF10B981)),
-    _MetricCard('Taxa de conversão', '4,7%', '+0,3%', Icons.trending_up_rounded, Color(0xFF3B82F6)),
-    _MetricCard('Ticket médio', 'R\$ 1.890', '+R\$ 120', Icons.price_check_rounded, Color(0xFFF59E0B)),
+    _MetricCard('Cliques no link hoje', '127', '+23 hoje', Icons.touch_app_rounded, Color(0xFFD4AF37)),
+    _MetricCard('Taxa de conversão', '4,7%', 'Média dos cliques', Icons.trending_up_rounded, Color(0xFF3B82F6)),
   ];
 
   // Carrossel social proof (comissões)
@@ -194,7 +193,7 @@ class _AffiliateHomeScreenState extends State<AffiliateHomeScreen> {
                     ),
                   ),
                   const Text(
-                    'Veja seus resultados de hoje',
+                    'Veja seus resultados',
                     style: TextStyle(fontSize: 13, color: AppColors.textMuted),
                   ),
                 ],
@@ -222,74 +221,155 @@ class _AffiliateHomeScreenState extends State<AffiliateHomeScreen> {
             child: _buildAffiliateProof(),
           ),
 
-          // ─── Ações rápidas ──────────────────────────────────────────────────
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'AÇÕES RÁPIDAS',
-                    style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textMuted,
-                        letterSpacing: 1),
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Expanded(child: _buildQuickAction(
-                          Icons.inventory_2_rounded, 'Meus Produtos',
-                          const Color(0xFFD4AF37), () {})),
-                      const SizedBox(width: 10),
-                      Expanded(child: _buildQuickAction(
-                          Icons.bar_chart_rounded, 'Relatórios',
-                          AppColors.primary, () {})),
-                      const SizedBox(width: 10),
-                      Expanded(child: _buildQuickAction(
-                          Icons.account_balance_wallet_rounded, 'Pagamentos',
-                          AppColors.savings, () {})),
-                    ],
-                  ),
-                ],
-              ).animate().fadeIn(delay: 200.ms),
-            ),
-          ),
-
           // ─── Feed de achados (para compartilhar) ────────────────────────────
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
-              child: Row(
+              child: Column(
                 children: [
-                  const Text(
-                    'Achados para Divulgar',
-                    style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.textPrimary),
-                  ),
-                  const Spacer(),
+                  // ─── Header "Achados para Divulgar" ───────────────────────────
+                  Row(
+                    children: [
+                      const Text(
+                        'Achados para Divulgar',
+                        style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.textPrimary),
+                      ),
+                      const Spacer(),
+                      GestureDetector(
+                        onTap: () {},  // TODO: navegar para lista completa
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFD4AF37).withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                                color: const Color(0xFFD4AF37).withValues(alpha: 0.3)),
+                          ),
+                          child: const Text(
+                            'Ver todos',
+                            style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFFD4AF37)),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ).animate().fadeIn(delay: 300.ms),
+                  const SizedBox(height: 16),
+                  // ─── Botão PROMOVER em destaque ──────────────────────────────
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFD4AF37).withValues(alpha: 0.1),
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF1A1200), Color(0xFF2E2000)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                          color: const Color(0xFFD4AF37).withValues(alpha: 0.3)),
+                          color: const Color(0xFFD4AF37).withValues(alpha: 0.5)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFD4AF37).withValues(alpha: 0.15),
+                          blurRadius: 20,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
                     ),
-                    child: const Text(
-                      'Ver todos',
-                      style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFFD4AF37)),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              width: 42,
+                              height: 42,
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [Color(0xFFD4AF37), Color(0xFFF59E0B)],
+                                ),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(Icons.rocket_launch_rounded,
+                                  color: Color(0xFF1A0A00), size: 22),
+                            ),
+                            const SizedBox(width: 12),
+                            const Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Promova e Fature',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w900,
+                                      color: Color(0xFFD4AF37),
+                                    ),
+                                  ),
+                                  Text(
+                                    'Compartilhe o link e ganhe comissão',
+                                    style: TextStyle(
+                                        fontSize: 11,
+                                        color: Color(0xFF8A7A5A)),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        GestureDetector(
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const ProductFormScreen(),
+                            ),
+                          ),
+                          child: Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFFD4AF37), Color(0xFFC8922A)],
+                              ),
+                              borderRadius: BorderRadius.circular(14),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFFD4AF37).withValues(alpha: 0.4),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.add_circle_rounded,
+                                    color: Color(0xFF1A0A00), size: 20),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Novo Produto para Promover',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFF1A0A00),
+                                    letterSpacing: 0.3,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
+                  ).animate().fadeIn(delay: 350.ms).slideY(begin: 0.05),
                 ],
-              ).animate().fadeIn(delay: 300.ms),
+              ),
             ),
           ),
 

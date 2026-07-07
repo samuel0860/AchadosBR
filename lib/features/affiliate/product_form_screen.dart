@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../app/theme.dart';
 import '../../models/affiliate_product.dart';
+import '../../models/store_brand.dart';
 import '../../services/auth_service.dart';
 import '../../services/product_service.dart';
 
@@ -25,13 +26,13 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   late final _discountCtrl = TextEditingController(
       text: widget.product?.discountPercent.toStringAsFixed(0) ?? '');
   late final _couponCtrl = TextEditingController(text: widget.product?.couponCode ?? '');
-  late final _storeCtrl = TextEditingController(text: widget.product?.store ?? '');
 
   late BadgePosition _badgePosition = widget.product?.badgePosition ?? BadgePosition.topLeft;
   late String _highlightColor = widget.product?.highlightColor ?? '#EF4444';
   late String _category = widget.product?.category ?? 'eletronicos';
   late bool _hasFreeShipping = widget.product?.hasFreeShipping ?? false;
   late String _imageAsset = widget.product?.imageUrl ?? '';
+  late String _selectedStoreId = widget.product?.storeId ?? '';
 
   bool _isLoading = false;
 
@@ -63,7 +64,6 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     _origPriceCtrl.dispose();
     _discountCtrl.dispose();
     _couponCtrl.dispose();
-    _storeCtrl.dispose();
     super.dispose();
   }
 
@@ -75,6 +75,9 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     final price = double.tryParse(_priceCtrl.text.replaceAll(',', '.')) ?? 0;
     final origPrice = double.tryParse(_origPriceCtrl.text.replaceAll(',', '.')) ?? 0;
     final discount = double.tryParse(_discountCtrl.text) ?? 0;
+
+    final brand = findStoreBrand(_selectedStoreId);
+    final storeName = brand?.name ?? '';
 
     final product = AffiliateProduct(
       id: widget.product?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
@@ -90,7 +93,8 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
       affiliateId: user?.id ?? '',
       createdAt: widget.product?.createdAt ?? DateTime.now(),
       couponCode: _couponCtrl.text.trim().isEmpty ? null : _couponCtrl.text.trim(),
-      store: _storeCtrl.text.trim(),
+      store: storeName,
+      storeId: _selectedStoreId,
       category: _category,
       hasFreeShipping: _hasFreeShipping,
     );
@@ -137,9 +141,11 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 120),
           children: [
-            // Preview
+            // ─── Preview ────────────────────────────────────────────────────
             _buildPreview(),
             const SizedBox(height: 20),
+
+            // ─── Informações do Produto ──────────────────────────────────────
             _buildSectionTitle('Informações do Produto'),
             _buildField(_titleCtrl, 'Título', Icons.title_rounded,
                 validator: (v) =>
@@ -147,9 +153,14 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
             const SizedBox(height: 12),
             _buildField(_descCtrl, 'Descrição', Icons.description_rounded,
                 maxLines: 3),
-            const SizedBox(height: 12),
-            _buildField(_storeCtrl, 'Loja', Icons.store_rounded),
             const SizedBox(height: 20),
+
+            // ─── Loja / Marketplace ──────────────────────────────────────────
+            _buildSectionTitle('Loja / Marketplace'),
+            _buildStorePicker(),
+            const SizedBox(height: 20),
+
+            // ─── Preços e Desconto ───────────────────────────────────────────
             _buildSectionTitle('Preços e Desconto'),
             Row(
               children: [
@@ -157,7 +168,9 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                   child: _buildField(_origPriceCtrl, 'Preço original',
                       Icons.price_change_outlined,
                       keyboardType: TextInputType.number,
-                      inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[\d.,]'))],
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(RegExp(r'[\d.,]'))
+                      ],
                       validator: (v) =>
                           v?.isEmpty == true ? 'Obrigatório' : null),
                 ),
@@ -166,7 +179,9 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                   child: _buildField(_priceCtrl, 'Preço promocional',
                       Icons.local_offer_rounded,
                       keyboardType: TextInputType.number,
-                      inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[\d.,]'))],
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(RegExp(r'[\d.,]'))
+                      ],
                       validator: (v) =>
                           v?.isEmpty == true ? 'Obrigatório' : null),
                 ),
@@ -182,7 +197,8 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                     Icons.percent_rounded,
                     keyboardType: TextInputType.number,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    validator: (v) => v?.isEmpty == true ? 'Obrigatório' : null,
+                    validator: (v) =>
+                        v?.isEmpty == true ? 'Obrigatório' : null,
                     onChanged: (_) => setState(() {}),
                   ),
                 ),
@@ -194,15 +210,23 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
               ],
             ),
             const SizedBox(height: 20),
+
+            // ─── Imagem do Produto ───────────────────────────────────────────
             _buildSectionTitle('Imagem do Produto'),
             _buildImagePicker(),
             const SizedBox(height: 20),
+
+            // ─── Selo de Desconto ────────────────────────────────────────────
             _buildSectionTitle('Selo de Desconto'),
             _buildBadgePositionPicker(),
             const SizedBox(height: 20),
+
+            // ─── Cor de Destaque do Selo ─────────────────────────────────────
             _buildSectionTitle('Cor de Destaque do Selo'),
             _buildColorPicker(),
             const SizedBox(height: 20),
+
+            // ─── Categoria ───────────────────────────────────────────────────
             _buildSectionTitle('Categoria'),
             _buildCategoryPicker(),
             const SizedBox(height: 12),
@@ -211,7 +235,8 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                 Checkbox(
                   value: _hasFreeShipping,
                   activeColor: AppColors.primary,
-                  onChanged: (v) => setState(() => _hasFreeShipping = v ?? false),
+                  onChanged: (v) =>
+                      setState(() => _hasFreeShipping = v ?? false),
                 ),
                 const Text('Frete grátis',
                     style: TextStyle(color: AppColors.textPrimary)),
@@ -223,9 +248,136 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     );
   }
 
+  // ─── Store Picker ──────────────────────────────────────────────────────────
+
+  Widget _buildStorePicker() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Banner da loja selecionada
+        if (_selectedStoreId.isNotEmpty) ...[
+          _buildSelectedStoreBanner(),
+          const SizedBox(height: 12),
+        ],
+        // Grade de logos das lojas
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: kStoreBrands.map((store) {
+            final isSelected = _selectedStoreId == store.id;
+            return GestureDetector(
+              onTap: () => setState(() => _selectedStoreId = store.id),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? store.primaryColor
+                      : AppColors.surfaceElevated,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isSelected ? store.primaryColor : AppColors.border,
+                    width: isSelected ? 2 : 1,
+                  ),
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color: store.primaryColor.withValues(alpha: 0.35),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          )
+                        ]
+                      : null,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Logo da loja (imagem real com fallback)
+                    StoreLogo(
+                      store: store,
+                      size: 28,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    const SizedBox(width: 7),
+                    Text(
+                      store.name,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight:
+                            isSelected ? FontWeight.w700 : FontWeight.w500,
+                        color: isSelected
+                            ? store.textColor
+                            : AppColors.textSecondary,
+                      ),
+                    ),
+                    if (isSelected) ...[
+                      const SizedBox(width: 4),
+                      Icon(Icons.check_circle_rounded,
+                          size: 14,
+                          color: store.textColor.withValues(alpha: 0.9)),
+                    ],
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSelectedStoreBanner() {
+    final store = findStoreBrand(_selectedStoreId)!;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: store.primaryColor.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: store.primaryColor.withValues(alpha: 0.4)),
+      ),
+      child: Row(
+        children: [
+          StoreLogo(
+            store: store,
+            size: 36,
+            borderRadius: BorderRadius.circular(9),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  store.name,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: store.primaryColor,
+                  ),
+                ),
+                const Text(
+                  'Loja selecionada',
+                  style: TextStyle(fontSize: 10, color: AppColors.textMuted),
+                ),
+              ],
+            ),
+          ),
+          GestureDetector(
+            onTap: () => setState(() => _selectedStoreId = ''),
+            child: const Icon(Icons.close_rounded,
+                size: 18, color: AppColors.textMuted),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ─── Preview ───────────────────────────────────────────────────────────────
+
   Widget _buildPreview() {
     final color = _hexColor(_highlightColor);
     final discount = _discountCtrl.text.isEmpty ? '0' : _discountCtrl.text;
+    final store = findStoreBrand(_selectedStoreId);
 
     return Container(
       height: 180,
@@ -238,7 +390,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
         borderRadius: BorderRadius.circular(15),
         child: Stack(
           children: [
-            // Background image
+            // Imagem de fundo
             if (_imageAsset.isNotEmpty)
               Positioned.fill(
                 child: Image.asset(
@@ -264,7 +416,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                   ],
                 ),
               ),
-            // Badge preview
+            // Selo de desconto
             if (_imageAsset.isNotEmpty)
               Positioned.fill(
                 child: Align(
@@ -295,13 +447,54 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                   ),
                 ),
               ),
-            // Label
+            // Badge da loja no preview (logo real)
+            if (store != null)
+              Positioned(
+                top: 8,
+                left: 8,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.6),
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.3),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      StoreLogo(
+                        store: store,
+                        size: 18,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      const SizedBox(width: 5),
+                      Text(
+                        store.name,
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            // Label de preview
             Positioned(
               bottom: 0,
               left: 0,
               right: 0,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
@@ -328,6 +521,8 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     );
   }
 
+  // ─── Image Picker ──────────────────────────────────────────────────────────
+
   Widget _buildImagePicker() {
     return Wrap(
       spacing: 8,
@@ -352,9 +547,11 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(9),
-                  child: Image.asset(path, fit: BoxFit.cover,
+                  child: Image.asset(path,
+                      fit: BoxFit.cover,
                       errorBuilder: (_, __, ___) => const Icon(
-                          Icons.image_rounded, color: AppColors.textMuted)),
+                          Icons.image_rounded,
+                          color: AppColors.textMuted)),
                 ),
               ),
               const SizedBox(height: 4),
@@ -373,6 +570,8 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
       }).toList(),
     );
   }
+
+  // ─── Badge Position Picker ─────────────────────────────────────────────────
 
   Widget _buildBadgePositionPicker() {
     return GridView.count(
@@ -413,8 +612,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
             pos.label,
             style: TextStyle(
                 fontSize: 11,
-                fontWeight:
-                    isSelected ? FontWeight.w700 : FontWeight.w400,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
                 color: isSelected
                     ? AppColors.primary
                     : AppColors.textSecondary),
@@ -423,6 +621,8 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
       ),
     );
   }
+
+  // ─── Color Picker ──────────────────────────────────────────────────────────
 
   Widget _buildColorPicker() {
     return Wrap(
@@ -446,7 +646,11 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                       ? Border.all(color: Colors.white, width: 3)
                       : null,
                   boxShadow: isSelected
-                      ? [BoxShadow(color: color.withValues(alpha: 0.6), blurRadius: 8)]
+                      ? [
+                          BoxShadow(
+                              color: color.withValues(alpha: 0.6),
+                              blurRadius: 8)
+                        ]
                       : null,
                 ),
                 child: isSelected
@@ -464,6 +668,8 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
       }).toList(),
     );
   }
+
+  // ─── Category Picker ───────────────────────────────────────────────────────
 
   Widget _buildCategoryPicker() {
     const categories = [
@@ -501,7 +707,9 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
               children: [
                 Icon(icon,
                     size: 14,
-                    color: isSelected ? AppColors.primary : AppColors.textMuted),
+                    color: isSelected
+                        ? AppColors.primary
+                        : AppColors.textMuted),
                 const SizedBox(width: 5),
                 Text(label,
                     style: TextStyle(
@@ -519,6 +727,8 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
       }).toList(),
     );
   }
+
+  // ─── Helpers ───────────────────────────────────────────────────────────────
 
   Widget _buildSectionTitle(String title) {
     return Padding(
