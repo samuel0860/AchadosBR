@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import '../models/affiliate_page_model.dart';
+import 'theme_service.dart' show getStorageFile;
 
 /// Persiste e recupera as configurações da página pública do afiliado
 class AffiliatePageService {
@@ -8,18 +9,15 @@ class AffiliatePageService {
   // Cache em memória por affiliateId
   static final Map<String, AffiliatePageModel> _cache = {};
 
-  static Future<String> _filePath(String affiliateId) async {
-    final dir = Directory.systemTemp;
-    return '${dir.path}/achados_affiliate_${affiliateId}_page.json';
-  }
+  static Future<File> _getFile(String affiliateId) =>
+      getStorageFile('achados_affiliate_${affiliateId}_page.json');
 
   Future<AffiliatePageModel> getPage(String affiliateId, String name) async {
     if (_cache.containsKey(affiliateId)) {
       return _cache[affiliateId]!;
     }
     try {
-      final path = await _filePath(affiliateId);
-      final file = File(path);
+      final file = await _getFile(affiliateId);
       if (await file.exists()) {
         final content = await file.readAsString();
         final model = AffiliatePageModel.fromJson(
@@ -40,8 +38,7 @@ class AffiliatePageService {
   Future<void> savePage(AffiliatePageModel model) async {
     _cache[model.affiliateId] = model;
     try {
-      final path = await _filePath(model.affiliateId);
-      final file = File(path);
+      final file = await _getFile(model.affiliateId);
       await file.writeAsString(jsonEncode(model.toJson()));
     } catch (_) {}
   }

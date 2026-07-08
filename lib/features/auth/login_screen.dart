@@ -67,6 +67,19 @@ class _LoginScreenState extends State<LoginScreen>
     setState(() => _isLoading = false);
 
     if (success) {
+      // Validate that the user logged into the correct tab
+      final isLoginAffiliate = _selectedType == LoginType.afiliado;
+      if (isLoginAffiliate && !auth.isAffiliate) {
+        await auth.logout();
+        setState(() => _errorMsg = 'Esta é uma conta de cliente. Use a aba "Sou Cliente" para entrar.');
+        return;
+      }
+      if (!isLoginAffiliate && auth.isAffiliate) {
+        await auth.logout();
+        setState(() => _errorMsg = 'Esta é uma conta de afiliado. Use a aba "Sou Afiliado" para entrar.');
+        return;
+      }
+
       // Rota correta baseada no tipo de usuário
       final destination = auth.isAffiliate
           ? const AffiliateScaffold()
@@ -169,28 +182,22 @@ class _LoginScreenState extends State<LoginScreen>
             .scale(begin: const Offset(0.8, 0.8), curve: Curves.easeOut)
             .shimmer(duration: 1200.ms, color: Colors.white24),
         const SizedBox(height: 16),
-        RichText(
-          text: TextSpan(
-            children: [
-              const TextSpan(
-                text: 'Achados',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w900,
-                  color: AppColors.textPrimary,
-                  letterSpacing: -1,
-                ),
-              ),
-              TextSpan(
-                text: 'BR',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w900,
-                  color: isAffiliate ? const Color(0xFFD4AF37) : AppColors.primary,
-                  letterSpacing: -1,
-                ),
-              ),
-            ],
+        ShaderMask(
+          shaderCallback: (bounds) => LinearGradient(
+            colors: isAffiliate
+                ? [const Color(0xFFD4AF37), const Color(0xFFF5D77E), const Color(0xFFC8922A)]
+                : [const Color(0xFF7C3AED), const Color(0xFFEF4444)],
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+          ).createShader(bounds),
+          child: const Text(
+            'AchouAchado',
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.w900,
+              color: Colors.white,
+              letterSpacing: -1,
+            ),
           ),
         ),
       ],
@@ -680,7 +687,7 @@ class _LoginScreenState extends State<LoginScreen>
 
     return GestureDetector(
       onTap: () {
-        _emailController.text = isAffiliate ? 'afiliado@achadosbr.com' : 'teste@achadosbr.com';
+        _emailController.text = isAffiliate ? 'afiliado@AchouAchado.com' : 'teste@AchouAchado.com';
         _passwordController.text = '123456';
         setState(() {});
       },
@@ -722,8 +729,8 @@ class _LoginScreenState extends State<LoginScreen>
                   const SizedBox(height: 2),
                   Text(
                     isAffiliate 
-                        ? 'Email: afiliado@achadosbr.com  |  Senha: 123456'
-                        : 'Email: teste@achadosbr.com  |  Senha: 123456',
+                        ? 'Email: afiliado@AchouAchado.com  |  Senha: 123456'
+                        : 'Email: teste@AchouAchado.com  |  Senha: 123456',
                     style: const TextStyle(
                       fontSize: 11,
                       color: AppColors.textMuted,

@@ -249,10 +249,14 @@ class _AffiliatePageScreenState extends State<AffiliatePageScreen>
           padding: const EdgeInsets.only(bottom: 12),
           child: DealCard(
             deal: deal,
+            heroTagPrefix: 'affiliate_page_',
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) => DealDetailScreen(deal: deal),
+                builder: (_) => DealDetailScreen(
+                  deal: deal,
+                  heroTagPrefix: 'affiliate_page_',
+                ),
               ),
             ),
           )
@@ -866,7 +870,7 @@ class _AffiliatePageScreenState extends State<AffiliatePageScreen>
                         Clipboard.setData(
                           ClipboardData(
                             text:
-                                'https://achadosbr.com/produto/${product.id}?ref=${product.affiliateId}',
+                                'https://AchouAchado.com/produto/${product.id}?ref=${product.affiliateId}',
                           ),
                         );
                         Navigator.pop(ctx);

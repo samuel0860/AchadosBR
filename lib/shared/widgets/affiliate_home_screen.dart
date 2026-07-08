@@ -76,82 +76,68 @@ class _AffiliateHomeScreenState extends State<AffiliateHomeScreen> {
           // ─── AppBar dourada do afiliado ─────────────────────────────────────
           SliverAppBar(
             pinned: true,
-            backgroundColor: _showElevation ? const Color(0xFF0D0800) : Colors.transparent,
-            elevation: _showElevation ? 4 : 0,
-            title: Row(
-              children: [
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFFD4AF37), Color(0xFFC8922A)],
-                    ),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Icon(Icons.workspace_premium_rounded,
-                      color: Color(0xFF1A0A00), size: 20),
+            backgroundColor: _showElevation
+                ? const Color(0xFF0A0800).withValues(alpha: 0.97)
+                : Colors.transparent,
+            elevation: 0,
+            title: ShaderMask(
+              shaderCallback: (bounds) => const LinearGradient(
+                colors: [Color(0xFFD4AF37), Color(0xFFF5D77E), Color(0xFFC8922A)],
+              ).createShader(bounds),
+              child: const Text(
+                'AchouAchado',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white,
+                  letterSpacing: -0.5,
                 ),
-                const SizedBox(width: 10),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'AchadosBR',
-                      style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w900,
-                          color: Color(0xFFD4AF37)),
-                    ),
-                    Text(
-                      'Afiliado Premium',
-                      style: TextStyle(
-                          fontSize: 10,
-                          color: const Color(0xFFD4AF37).withValues(alpha: 0.7)),
-                    ),
-                  ],
-                ),
-              ],
+              ),
             ),
             actions: [
               // Minha Vitrine
               GestureDetector(
                 onTap: () {
-                  final user = _authService.currentUser;
-                  if (user != null) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => AffiliatePageScreen(
-                          affiliateId: user.id,
-                          affiliateName: user.name,
-                          isOwner: true,
-                        ),
+                  final u = _authService.currentUser;
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => AffiliatePageScreen(
+                        affiliateId: u?.id ?? 'me',
+                        affiliateName: u?.name ?? 'Minha Vitrine',
+                        isOwner: true,
                       ),
-                    );
-                  }
+                    ),
+                  );
                 },
                 child: Container(
                   margin: const EdgeInsets.only(right: 8),
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1A1200),
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFD4AF37), Color(0xFFC8922A)],
+                    ),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                        color: const Color(0xFFD4AF37).withValues(alpha: 0.4)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFD4AF37).withValues(alpha: 0.35),
+                        blurRadius: 10,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
                   ),
                   child: const Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(Icons.storefront_rounded,
-                          color: Color(0xFFD4AF37), size: 14),
+                          color: Color(0xFF1A0A00), size: 14),
                       SizedBox(width: 5),
                       Text(
                         'Vitrine',
                         style: TextStyle(
                           fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFFD4AF37),
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF1A0A00),
                         ),
                       ),
                     ],
@@ -170,7 +156,8 @@ class _AffiliateHomeScreenState extends State<AffiliateHomeScreen> {
                   decoration: BoxDecoration(
                     color: const Color(0xFF1A1200),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFF2A1F00)),
+                    border: Border.all(
+                        color: const Color(0xFFD4AF37).withValues(alpha: 0.25)),
                   ),
                   child: Stack(
                     clipBehavior: Clip.none,
@@ -202,11 +189,19 @@ class _AffiliateHomeScreenState extends State<AffiliateHomeScreen> {
                   width: 38,
                   height: 38,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFD4AF37),
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFD4AF37), Color(0xFFC8922A)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
                     shape: BoxShape.circle,
-                    border: Border.all(
-                        color: const Color(0xFFD4AF37).withValues(alpha: 0.5),
-                        width: 2),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFD4AF37).withValues(alpha: 0.4),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
                   child: Center(
                     child: Text(
@@ -229,12 +224,33 @@ class _AffiliateHomeScreenState extends State<AffiliateHomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Badge premium
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFD4AF37), Color(0xFFC8922A)],
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Text(
+                      'Afiliado Premium',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF1A0A00),
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
                   Text(
-                    'Olá, ${user?.name.split(' ').first ?? 'Afiliado'}! 👑',
+                    'Olá, ${user?.name.split(' ').first ?? 'Afiliado'}!',
                     style: const TextStyle(
-                      fontSize: 22,
+                      fontSize: 26,
                       fontWeight: FontWeight.w900,
                       color: AppColors.textPrimary,
+                      letterSpacing: -0.5,
                     ),
                   ),
                   const Text(
@@ -433,10 +449,14 @@ class _AffiliateHomeScreenState extends State<AffiliateHomeScreen> {
                     padding: const EdgeInsets.only(bottom: 12),
                     child: DealCard(
                       deal: deal,
+                      heroTagPrefix: 'affiliate_',
                       onTap: () => Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (_) => DealDetailScreen(deal: deal)),
+                            builder: (_) => DealDetailScreen(
+                              deal: deal,
+                              heroTagPrefix: 'affiliate_',
+                            )),
                       ),
                     ).animate().fadeIn(delay: Duration(milliseconds: 80 * index)),
                   );

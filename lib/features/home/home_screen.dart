@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../app/theme.dart';
 import '../../data/mock_deals.dart';
@@ -8,6 +9,7 @@ import '../../services/boost_service.dart';
 import '../../shared/widgets/deal_card.dart';
 import '../notifications/notifications_screen.dart';
 import '../profile/profile_screen.dart';
+import '../../shared/widgets/deal_card_skeleton.dart';
 import 'flash_deals_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -24,6 +26,7 @@ class _HomeScreenState extends State<HomeScreen>
   late ScrollController _scrollController;
   bool _showElevation = false;
   int _proofIndex = 0;
+  bool _isLoading = true;
 
   // Carrossel CLIENTE — foco em economia e cupons
   static const _clientProof = [
@@ -51,6 +54,11 @@ class _HomeScreenState extends State<HomeScreen>
       if (!mounted) return false;
       setState(() => _proofIndex = (_proofIndex + 1) % _clientProof.length);
       return true;
+    });
+
+    // Simulate network load
+    Future.delayed(const Duration(milliseconds: 1200), () {
+      if (mounted) setState(() => _isLoading = false);
     });
   }
 
@@ -88,6 +96,26 @@ class _HomeScreenState extends State<HomeScreen>
         controller: _scrollController,
         slivers: [
           _buildAppBar(),
+          CupertinoSliverRefreshControl(
+            onRefresh: () async {
+              // Simula requisição
+              await Future.delayed(const Duration(milliseconds: 1500));
+            },
+            builder: (context, refreshState, pulledExtent, refreshTriggerPullDistance, refreshIndicatorExtent) {
+              return Center(
+                child: const Icon(
+                  Icons.shopping_bag_rounded,
+                  color: AppColors.primary,
+                  size: 32,
+                ).animate(
+                  onPlay: (controller) => controller.repeat(),
+                ).shake(hz: 4, curve: Curves.easeInOutCubic)
+                 .scale(begin: const Offset(0.8, 0.8), end: const Offset(1.2, 1.2), duration: 600.ms)
+                 .then(delay: 600.ms)
+                 .scale(begin: const Offset(1.2, 1.2), end: const Offset(0.8, 0.8), duration: 600.ms),
+              );
+            },
+          ),
           _buildBanner(),
           SliverToBoxAdapter(child: _buildClientProof()),
           _buildSortTabs(),
@@ -187,47 +215,29 @@ class _HomeScreenState extends State<HomeScreen>
       shadowColor: Colors.black,
       title: Row(
         children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              gradient: AppGradients.primaryGradient,
-              borderRadius: BorderRadius.circular(10),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.primary.withValues(alpha: 0.4),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: const Icon(
-              Icons.local_fire_department_rounded,
-              color: Colors.white,
-              size: 20,
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: Image.asset(
+              'assets/images/app_icon.png',
+              width: 36,
+              height: 36,
             ),
           ),
           const SizedBox(width: 10),
-          RichText(
-            text: TextSpan(
-              children: [
-                TextSpan(
-                  text: 'Achados',
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w900,
-                    color: colors.textPrimary,
-                  ),
-                ),
-                const TextSpan(
-                  text: 'BR',
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.primary,
-                  ),
-                ),
-              ],
+          ShaderMask(
+            shaderCallback: (bounds) => const LinearGradient(
+              colors: [Color(0xFF7C3AED), Color(0xFFEF4444)],
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+            ).createShader(bounds),
+            child: const Text(
+              'AchouAchado',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w900,
+                color: Colors.white,
+                letterSpacing: -0.5,
+              ),
             ),
           ),
         ],
@@ -596,7 +606,7 @@ class _HomeScreenState extends State<HomeScreen>
         child: Row(
           children: [
             Text(
-              '${filteredDeals.length} achados encontrados',
+              '${filteredDeals.length} achouAchados encontrados',
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
@@ -619,15 +629,21 @@ class _HomeScreenState extends State<HomeScreen>
     return SliverList(
       delegate: SliverChildBuilderDelegate(
         (context, index) {
+          if (_isLoading) {
+            return const DealCardSkeleton();
+          }
           if (index == filteredDeals.length) {
             return const SizedBox(height: 20);
           }
-          return DealCard(deal: filteredDeals[index])
+          return DealCard(
+            deal: filteredDeals[index],
+            heroTagPrefix: 'home_list_',
+          )
               .animate(delay: (index * 80).ms)
               .fadeIn(duration: 400.ms)
               .slideY(begin: 0.1, end: 0);
         },
-        childCount: filteredDeals.length + 1,
+        childCount: _isLoading ? 4 : filteredDeals.length + 1,
       ),
     );
   }

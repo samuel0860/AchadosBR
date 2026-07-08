@@ -433,7 +433,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   _MenuItemData(
                     icon: Icons.bookmark_outline_rounded,
                     title: 'Itens Salvos',
-                    subtitle: '$savedCount achados salvos',
+                    subtitle: '$savedCount achouAchados salvos',
                     color: const Color(0xFF10B981),
                     onTap: () => Navigator.push(context,
                         MaterialPageRoute(builder: (_) => const SavedDealsScreen())),
@@ -475,7 +475,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   _MenuItemData(
                     icon: Icons.info_outline_rounded,
                     title: 'Sobre o App',
-                    subtitle: 'Versão 2.0.0 · AchadosBR',
+                    subtitle: 'Versão 2.0.0 · AchouAchado',
                     color: AppColors.textMuted,
                     onTap: () => _showAboutAppDialog(context),
                   ),
@@ -735,19 +735,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void _showAboutAppDialog(BuildContext context) {
     showAboutDialog(
       context: context,
-      applicationName: 'AchadosBR',
+      applicationName: 'AchouAchado',
       applicationVersion: '2.0.0',
-      applicationIcon: Container(
-        width: 60,
-        height: 60,
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFF7C3AED), Color(0xFFEF4444)],
-          ),
-          borderRadius: BorderRadius.circular(14),
+      applicationIcon: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Image.asset(
+          'assets/images/app_icon_gold.png',
+          width: 60,
+          height: 60,
         ),
-        child: const Icon(Icons.local_fire_department_rounded,
-            color: Colors.white, size: 32),
       ),
       children: const [
         Text('O melhor app de promoções do Brasil!',

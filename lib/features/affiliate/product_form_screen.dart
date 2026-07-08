@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../app/theme.dart';
+import '../../shared/utils/app_snackbar.dart';
 import '../../models/affiliate_product.dart';
 import '../../models/store_brand.dart';
 import '../../services/auth_service.dart';
@@ -18,21 +19,33 @@ class ProductFormScreen extends StatefulWidget {
 
 class _ProductFormScreenState extends State<ProductFormScreen> {
   final _formKey = GlobalKey<FormState>();
-  late final _titleCtrl = TextEditingController(text: widget.product?.title ?? '');
-  late final _descCtrl = TextEditingController(text: widget.product?.description ?? '');
+  late final _titleCtrl = TextEditingController(
+    text: widget.product?.title ?? '',
+  );
+  late final _descCtrl = TextEditingController(
+    text: widget.product?.description ?? '',
+  );
   late final _priceCtrl = TextEditingController(
-      text: widget.product?.price.toStringAsFixed(2) ?? '');
+    text: widget.product?.price.toStringAsFixed(2) ?? '',
+  );
   late final _origPriceCtrl = TextEditingController(
-      text: widget.product?.originalPrice.toStringAsFixed(2) ?? '');
+    text: widget.product?.originalPrice.toStringAsFixed(2) ?? '',
+  );
   late final _discountCtrl = TextEditingController(
-      text: widget.product?.discountPercent.toStringAsFixed(0) ?? '');
-  late final _couponCtrl = TextEditingController(text: widget.product?.couponCode ?? '');
+    text: widget.product?.discountPercent.toStringAsFixed(0) ?? '',
+  );
+  late final _couponCtrl = TextEditingController(
+    text: widget.product?.couponCode ?? '',
+  );
 
-  late BadgePosition _badgePosition = widget.product?.badgePosition ?? BadgePosition.topLeft;
+  late BadgePosition _badgePosition =
+      widget.product?.badgePosition ?? BadgePosition.topLeft;
   late String _highlightColor = widget.product?.highlightColor ?? '#EF4444';
   late String _category = widget.product?.category ?? 'eletronicos';
   late bool _hasFreeShipping = widget.product?.hasFreeShipping ?? false;
-  late List<String> _imageAssets = List<String>.from(widget.product?.imageUrls ?? []);
+  late List<String> _imageAssets = List<String>.from(
+    widget.product?.imageUrls ?? [],
+  );
   late String _selectedStoreId = widget.product?.storeId ?? '';
 
   bool _isLoading = false;
@@ -68,14 +81,17 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
 
     final user = AuthService().currentUser;
     final price = double.tryParse(_priceCtrl.text.replaceAll(',', '.')) ?? 0;
-    final origPrice = double.tryParse(_origPriceCtrl.text.replaceAll(',', '.')) ?? 0;
+    final origPrice =
+        double.tryParse(_origPriceCtrl.text.replaceAll(',', '.')) ?? 0;
     final discount = double.tryParse(_discountCtrl.text) ?? 0;
 
     final brand = findStoreBrand(_selectedStoreId);
     final storeName = brand?.name ?? '';
 
     final product = AffiliateProduct(
-      id: widget.product?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
+      id:
+          widget.product?.id ??
+          DateTime.now().millisecondsSinceEpoch.toString(),
       title: _titleCtrl.text.trim(),
       description: _descCtrl.text.trim(),
       price: price,
@@ -87,7 +103,9 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
       isActive: widget.product?.isActive ?? true,
       affiliateId: user?.id ?? '',
       createdAt: widget.product?.createdAt ?? DateTime.now(),
-      couponCode: _couponCtrl.text.trim().isEmpty ? null : _couponCtrl.text.trim(),
+      couponCode: _couponCtrl.text.trim().isEmpty
+          ? null
+          : _couponCtrl.text.trim(),
       store: storeName,
       storeId: _selectedStoreId,
       category: _category,
@@ -122,12 +140,18 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                     width: 18,
                     height: 18,
                     child: CircularProgressIndicator(
-                        strokeWidth: 2, color: AppColors.primary))
-                : const Text('Salvar',
+                      strokeWidth: 2,
+                      color: AppColors.primary,
+                    ),
+                  )
+                : const Text(
+                    'Salvar',
                     style: TextStyle(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 15)),
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
+                    ),
+                  ),
           ),
         ],
       ),
@@ -142,12 +166,19 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
 
             // ─── Informações do Produto ──────────────────────────────────────
             _buildSectionTitle('Informações do Produto'),
-            _buildField(_titleCtrl, 'Título', Icons.title_rounded,
-                validator: (v) =>
-                    v?.isEmpty == true ? 'Informe o título' : null),
+            _buildField(
+              _titleCtrl,
+              'Título',
+              Icons.title_rounded,
+              validator: (v) => v?.isEmpty == true ? 'Informe o título' : null,
+            ),
             const SizedBox(height: 12),
-            _buildField(_descCtrl, 'Descrição', Icons.description_rounded,
-                maxLines: 3),
+            _buildField(
+              _descCtrl,
+              'Descrição',
+              Icons.description_rounded,
+              maxLines: 3,
+            ),
             const SizedBox(height: 20),
 
             // ─── Loja / Marketplace ──────────────────────────────────────────
@@ -160,25 +191,29 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
             Row(
               children: [
                 Expanded(
-                  child: _buildField(_origPriceCtrl, 'Preço original',
-                      Icons.price_change_outlined,
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.allow(RegExp(r'[\d.,]'))
-                      ],
-                      validator: (v) =>
-                          v?.isEmpty == true ? 'Obrigatório' : null),
+                  child: _buildField(
+                    _origPriceCtrl,
+                    'Preço original',
+                    Icons.price_change_outlined,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[\d.,]')),
+                    ],
+                    validator: (v) => v?.isEmpty == true ? 'Obrigatório' : null,
+                  ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: _buildField(_priceCtrl, 'Preço promocional',
-                      Icons.local_offer_rounded,
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.allow(RegExp(r'[\d.,]'))
-                      ],
-                      validator: (v) =>
-                          v?.isEmpty == true ? 'Obrigatório' : null),
+                  child: _buildField(
+                    _priceCtrl,
+                    'Preço promocional',
+                    Icons.local_offer_rounded,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[\d.,]')),
+                    ],
+                    validator: (v) => v?.isEmpty == true ? 'Obrigatório' : null,
+                  ),
                 ),
               ],
             ),
@@ -192,15 +227,17 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                     Icons.percent_rounded,
                     keyboardType: TextInputType.number,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    validator: (v) =>
-                        v?.isEmpty == true ? 'Obrigatório' : null,
+                    validator: (v) => v?.isEmpty == true ? 'Obrigatório' : null,
                     onChanged: (_) => setState(() {}),
                   ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: _buildField(
-                      _couponCtrl, 'Cupom (opcional)', Icons.discount_rounded),
+                    _couponCtrl,
+                    'Cupom (opcional)',
+                    Icons.discount_rounded,
+                  ),
                 ),
               ],
             ),
@@ -233,8 +270,10 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                   onChanged: (v) =>
                       setState(() => _hasFreeShipping = v ?? false),
                 ),
-                const Text('Frete grátis',
-                    style: TextStyle(color: AppColors.textPrimary)),
+                const Text(
+                  'Frete grátis',
+                  style: TextStyle(color: AppColors.textPrimary),
+                ),
               ],
             ),
           ],
@@ -264,7 +303,10 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
               onTap: () => setState(() => _selectedStoreId = store.id),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 180),
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 7,
+                ),
                 decoration: BoxDecoration(
                   color: isSelected
                       ? store.primaryColor
@@ -280,7 +322,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                             color: store.primaryColor.withValues(alpha: 0.35),
                             blurRadius: 8,
                             offset: const Offset(0, 3),
-                          )
+                          ),
                         ]
                       : null,
                 ),
@@ -298,8 +340,9 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                       store.name,
                       style: TextStyle(
                         fontSize: 12,
-                        fontWeight:
-                            isSelected ? FontWeight.w700 : FontWeight.w500,
+                        fontWeight: isSelected
+                            ? FontWeight.w700
+                            : FontWeight.w500,
                         color: isSelected
                             ? store.textColor
                             : AppColors.textSecondary,
@@ -307,9 +350,11 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                     ),
                     if (isSelected) ...[
                       const SizedBox(width: 4),
-                      Icon(Icons.check_circle_rounded,
-                          size: 14,
-                          color: store.textColor.withValues(alpha: 0.9)),
+                      Icon(
+                        Icons.check_circle_rounded,
+                        size: 14,
+                        color: store.textColor.withValues(alpha: 0.9),
+                      ),
                     ],
                   ],
                 ),
@@ -359,8 +404,11 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
           ),
           GestureDetector(
             onTap: () => setState(() => _selectedStoreId = ''),
-            child: const Icon(Icons.close_rounded,
-                size: 18, color: AppColors.textMuted),
+            child: const Icon(
+              Icons.close_rounded,
+              size: 18,
+              color: AppColors.textMuted,
+            ),
           ),
         ],
       ),
@@ -378,13 +426,29 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     Widget imageWidget;
     if (firstImage != null) {
       if (firstImage.startsWith('assets/')) {
-        imageWidget = Image.asset(firstImage, fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => const Center(
-                child: Icon(Icons.image_rounded, size: 48, color: AppColors.textMuted)));
+        imageWidget = Image.asset(
+          firstImage,
+          fit: BoxFit.cover,
+          errorBuilder: (_, _, _) => const Center(
+            child: Icon(
+              Icons.image_rounded,
+              size: 48,
+              color: AppColors.textMuted,
+            ),
+          ),
+        );
       } else {
-        imageWidget = Image.file(File(firstImage), fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => const Center(
-                child: Icon(Icons.image_rounded, size: 48, color: AppColors.textMuted)));
+        imageWidget = Image.file(
+          File(firstImage),
+          fit: BoxFit.cover,
+          errorBuilder: (_, _, _) => const Center(
+            child: Icon(
+              Icons.image_rounded,
+              size: 48,
+              color: AppColors.textMuted,
+            ),
+          ),
+        );
       }
     } else {
       imageWidget = const Center(
@@ -393,8 +457,10 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
           children: [
             Icon(Icons.image_rounded, size: 48, color: AppColors.textMuted),
             SizedBox(height: 8),
-            Text('Preview da imagem',
-                style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
+            Text(
+              'Preview da imagem',
+              style: TextStyle(color: AppColors.textMuted, fontSize: 12),
+            ),
           ],
         ),
       );
@@ -421,16 +487,22 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
               // Ícone de adicionar imagem quando vazio
               if (firstImage == null)
                 Positioned(
-                  top: 10, right: 10,
+                  top: 10,
+                  right: 10,
                   child: Container(
                     padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
                       color: AppColors.primary.withValues(alpha: 0.15),
                       shape: BoxShape.circle,
-                      border: Border.all(color: AppColors.primary.withValues(alpha: 0.4)),
+                      border: Border.all(
+                        color: AppColors.primary.withValues(alpha: 0.4),
+                      ),
                     ),
-                    child: const Icon(Icons.add_photo_alternate_rounded,
-                        size: 18, color: AppColors.primary),
+                    child: const Icon(
+                      Icons.add_photo_alternate_rounded,
+                      size: 18,
+                      color: AppColors.primary,
+                    ),
                   ),
                 ),
               // Selo de desconto
@@ -441,16 +513,29 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                     child: Padding(
                       padding: const EdgeInsets.all(10),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: color,
                           borderRadius: BorderRadius.circular(10),
                           boxShadow: [
-                            BoxShadow(color: color.withValues(alpha: 0.5), blurRadius: 8, offset: const Offset(0, 2)),
+                            BoxShadow(
+                              color: color.withValues(alpha: 0.5),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
                           ],
                         ),
-                        child: Text('-$discount%',
-                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.white)),
+                        child: Text(
+                          '-$discount%',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -458,9 +543,13 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
               // Badge da loja
               if (store != null)
                 Positioned(
-                  top: 8, left: 8,
+                  top: 8,
+                  left: 8,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.black.withValues(alpha: 0.6),
                       borderRadius: BorderRadius.circular(8),
@@ -468,22 +557,42 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        StoreLogo(store: store, size: 18, borderRadius: BorderRadius.circular(4)),
+                        StoreLogo(
+                          store: store,
+                          size: 18,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
                         const SizedBox(width: 5),
-                        Text(store.name, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.white)),
+                        Text(
+                          store.name,
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
                       ],
                     ),
                   ),
                 ),
               // Label de preview
               Positioned(
-                bottom: 0, left: 0, right: 0,
+                bottom: 0,
+                left: 0,
+                right: 0,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      begin: Alignment.topCenter, end: Alignment.bottomCenter,
-                      colors: [Colors.transparent, Colors.black.withValues(alpha: 0.7)],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.transparent,
+                        Colors.black.withValues(alpha: 0.7),
+                      ],
                     ),
                   ),
                   child: Text(
@@ -515,17 +624,14 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
       final remaining = 5 - _imageAssets.length;
       if (remaining <= 0) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Máximo de 5 imagens atingido.'),
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
+          AppSnackBar.show(context, 'Máximo de 5 imagens atingido.', isError: true);
         }
         return;
       }
 
-      final List<dynamic>? paths = await _galleryChannel.invokeMethod('pickImages');
+      final List<dynamic>? paths = await _galleryChannel.invokeMethod(
+        'pickImages',
+      );
       if (paths != null && paths.isNotEmpty) {
         setState(() {
           for (final p in paths) {
@@ -535,21 +641,11 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
       }
     } on PlatformException catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Erro ao acessar galeria: ${e.message}'),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        AppSnackBar.show(context, 'Erro ao acessar galeria: ${e.message}', isError: true);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Erro inesperado: $e'),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        AppSnackBar.show(context, 'Erro inesperado: $e', isError: true);
       }
     }
   }
@@ -562,20 +658,27 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   Widget _buildImageItem(String path, int i) {
     Widget thumb;
     if (path.startsWith('assets/')) {
-      thumb = Image.asset(path, fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) =>
-              const Icon(Icons.image_rounded, color: AppColors.textMuted));
+      thumb = Image.asset(
+        path,
+        fit: BoxFit.cover,
+        errorBuilder: (_, _, _) =>
+            const Icon(Icons.image_rounded, color: AppColors.textMuted),
+      );
     } else {
-      thumb = Image.file(File(path), fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) =>
-              const Icon(Icons.image_rounded, color: AppColors.textMuted));
+      thumb = Image.file(
+        File(path),
+        fit: BoxFit.cover,
+        errorBuilder: (_, _, _) =>
+            const Icon(Icons.image_rounded, color: AppColors.textMuted),
+      );
     }
 
     return Stack(
       key: ValueKey(path + i.toString()),
       children: [
         Container(
-          width: 70, height: 70,
+          width: 70,
+          height: 70,
           margin: const EdgeInsets.only(right: 8),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(10),
@@ -584,27 +687,49 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
               width: i == 0 ? 2.5 : 1,
             ),
           ),
-          child: ClipRRect(borderRadius: BorderRadius.circular(9), child: thumb),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(9),
+            child: thumb,
+          ),
         ),
         Positioned(
-          top: 0, right: 8,
+          top: 0,
+          right: 8,
           child: GestureDetector(
             onTap: () => setState(() => _imageAssets.removeAt(i)),
             child: Container(
-              width: 18, height: 18,
-              decoration: const BoxDecoration(color: AppColors.hot, shape: BoxShape.circle),
-              child: const Icon(Icons.close_rounded, color: Colors.white, size: 12),
+              width: 18,
+              height: 18,
+              decoration: const BoxDecoration(
+                color: AppColors.hot,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.close_rounded,
+                color: Colors.white,
+                size: 12,
+              ),
             ),
           ),
         ),
         if (i == 0)
           Positioned(
-            bottom: 2, left: 2,
+            bottom: 2,
+            left: 2,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-              decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(4)),
-              child: const Text('Capa',
-                  style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.w700)),
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: const Text(
+                'Capa',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 8,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ),
           ),
       ],
@@ -635,18 +760,24 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.photo_library_rounded, size: 20,
+                      Icon(
+                        Icons.photo_library_rounded,
+                        size: 20,
+                        color: _imageAssets.length < 5
+                            ? AppColors.primary
+                            : AppColors.textMuted,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Galeria',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
                           color: _imageAssets.length < 5
                               ? AppColors.primary
-                              : AppColors.textMuted),
-                      const SizedBox(width: 8),
-                      Text('Galeria',
-                          style: TextStyle(
-                            fontSize: 13, fontWeight: FontWeight.w700,
-                            color: _imageAssets.length < 5
-                                ? AppColors.primary
-                                : AppColors.textMuted,
-                          )),
+                              : AppColors.textMuted,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -670,18 +801,24 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.camera_alt_rounded, size: 20,
+                      Icon(
+                        Icons.camera_alt_rounded,
+                        size: 20,
+                        color: _imageAssets.length < 5
+                            ? AppColors.primary
+                            : AppColors.textMuted,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Câmera',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
                           color: _imageAssets.length < 5
                               ? AppColors.primary
-                              : AppColors.textMuted),
-                      const SizedBox(width: 8),
-                      Text('Câmera',
-                          style: TextStyle(
-                            fontSize: 13, fontWeight: FontWeight.w700,
-                            color: _imageAssets.length < 5
-                                ? AppColors.primary
-                                : AppColors.textMuted,
-                          )),
+                              : AppColors.textMuted,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -715,8 +852,10 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
             ),
           ),
           const SizedBox(height: 4),
-          const Text('Arraste para reordenar • A primeira é a capa',
-              style: TextStyle(fontSize: 10, color: AppColors.textMuted)),
+          const Text(
+            'Arraste para reordenar • A primeira é a capa',
+            style: TextStyle(fontSize: 10, color: AppColors.textMuted),
+          ),
         ],
       ],
     );
@@ -762,11 +901,10 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
           child: Text(
             pos.label,
             style: TextStyle(
-                fontSize: 11,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
-                color: isSelected
-                    ? AppColors.primary
-                    : AppColors.textSecondary),
+              fontSize: 11,
+              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
+              color: isSelected ? AppColors.primary : AppColors.textSecondary,
+            ),
           ),
         ),
       ),
@@ -799,20 +937,25 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                   boxShadow: isSelected
                       ? [
                           BoxShadow(
-                              color: color.withValues(alpha: 0.6),
-                              blurRadius: 8)
+                            color: color.withValues(alpha: 0.6),
+                            blurRadius: 8,
+                          ),
                         ]
                       : null,
                 ),
                 child: isSelected
-                    ? const Icon(Icons.check_rounded,
-                        color: Colors.white, size: 18)
+                    ? const Icon(
+                        Icons.check_rounded,
+                        color: Colors.white,
+                        size: 18,
+                      )
                     : null,
               ),
               const SizedBox(height: 3),
-              Text(label,
-                  style: const TextStyle(
-                      fontSize: 9, color: AppColors.textMuted)),
+              Text(
+                label,
+                style: const TextStyle(fontSize: 9, color: AppColors.textMuted),
+              ),
             ],
           ),
         );
@@ -856,21 +999,24 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(icon,
-                    size: 14,
+                Icon(
+                  icon,
+                  size: 14,
+                  color: isSelected ? AppColors.primary : AppColors.textMuted,
+                ),
+                const SizedBox(width: 5),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 12,
                     color: isSelected
                         ? AppColors.primary
-                        : AppColors.textMuted),
-                const SizedBox(width: 5),
-                Text(label,
-                    style: TextStyle(
-                        fontSize: 12,
-                        color: isSelected
-                            ? AppColors.primary
-                            : AppColors.textSecondary,
-                        fontWeight: isSelected
-                            ? FontWeight.w700
-                            : FontWeight.normal)),
+                        : AppColors.textSecondary,
+                    fontWeight: isSelected
+                        ? FontWeight.w700
+                        : FontWeight.normal,
+                  ),
+                ),
               ],
             ),
           ),
@@ -887,10 +1033,11 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
       child: Text(
         title.toUpperCase(),
         style: const TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-            color: AppColors.textMuted,
-            letterSpacing: 1),
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          color: AppColors.textMuted,
+          letterSpacing: 1,
+        ),
       ),
     );
   }
@@ -920,17 +1067,21 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
         filled: true,
         fillColor: AppColors.surfaceElevated,
         border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: AppColors.border)),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppColors.border),
+        ),
         enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: AppColors.border)),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppColors.border),
+        ),
         focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: AppColors.primary, width: 2)),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppColors.primary, width: 2),
+        ),
         errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: AppColors.hot)),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppColors.hot),
+        ),
       ),
     );
   }

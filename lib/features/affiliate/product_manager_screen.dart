@@ -30,20 +30,23 @@ class _ProductManagerScreenState extends State<ProductManagerScreen> {
         backgroundColor: AppColors.background,
         foregroundColor: AppColors.textPrimary,
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () async {
-          await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => const ProductFormScreen(),
-            ),
-          );
-          setState(() {});
-        },
-        backgroundColor: AppColors.primary,
-        icon: const Icon(Icons.add_rounded, color: Colors.white),
-        label: const Text('Novo Produto',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 90),
+        child: FloatingActionButton.extended(
+          onPressed: () async {
+            await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const ProductFormScreen(),
+              ),
+            );
+            setState(() {});
+          },
+          backgroundColor: AppColors.primary,
+          icon: const Icon(Icons.add_rounded, color: Colors.white),
+          label: const Text('Novo Produto',
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+        ),
       ),
       body: products.isEmpty
           ? _buildEmpty(context)

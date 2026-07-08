@@ -1,7 +1,10 @@
+import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
 import '../../app/theme.dart';
+import '../../shared/utils/app_snackbar.dart';
 import '../../data/mock_affiliates.dart';
 import '../../models/deal.dart';
 import '../../models/store_brand.dart';
@@ -11,8 +14,13 @@ import '../review/reviews_section.dart';
 
 class DealDetailScreen extends StatefulWidget {
   final Deal deal;
+  final String heroTagPrefix;
 
-  const DealDetailScreen({super.key, required this.deal});
+  const DealDetailScreen({
+    super.key,
+    required this.deal,
+    this.heroTagPrefix = '',
+  });
 
   @override
   State<DealDetailScreen> createState() => _DealDetailScreenState();
@@ -23,6 +31,7 @@ class _DealDetailScreenState extends State<DealDetailScreen> {
   late bool _isSaved;
   late int _upvotes;
   final _userDataService = UserDataService();
+  late ConfettiController _confettiController;
 
   @override
   void initState() {
@@ -35,6 +44,13 @@ class _DealDetailScreenState extends State<DealDetailScreen> {
       widget.deal.title,
       widget.deal.imageUrl,
     );
+    _confettiController = ConfettiController(duration: const Duration(seconds: 2));
+  }
+
+  @override
+  void dispose() {
+    _confettiController.dispose();
+    super.dispose();
   }
 
   @override
@@ -49,41 +65,55 @@ class _DealDetailScreenState extends State<DealDetailScreen> {
 
     return Scaffold(
       backgroundColor: colors.background,
-      body: CustomScrollView(
-        slivers: [
-          _buildSliverAppBar(deal),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildStoreBadge(deal),
-                  const SizedBox(height: 12),
-                  _buildTitle(deal),
-                  const SizedBox(height: 16),
-                  _buildPricing(deal, currencyFormatter),
-                  if (deal.couponCode != null) ...[
-                    const SizedBox(height: 16),
-                    _buildCouponSection(deal.couponCode!),
-                  ],
-                  const SizedBox(height: 16),
-                  _buildQuickInfo(deal),
-                  const SizedBox(height: 16),
-                  _buildDescription(deal),
-                  const SizedBox(height: 16),
-                  _buildVotingSection(deal),
-                  const SizedBox(height: 16),
-                  _buildAffiliateCard(deal),
-                  const SizedBox(height: 8),
-                ],
+      body: Stack(
+        children: [
+          CustomScrollView(
+            slivers: [
+
+              _buildSliverAppBar(deal),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildStoreBadge(deal),
+                      const SizedBox(height: 12),
+                      _buildTitle(deal),
+                      const SizedBox(height: 16),
+                      _buildPricing(deal, currencyFormatter),
+                      if (deal.couponCode != null) ...[
+                        const SizedBox(height: 16),
+                        _buildCouponSection(deal.couponCode!),
+                      ],
+                      const SizedBox(height: 16),
+                      _buildQuickInfo(deal),
+                      const SizedBox(height: 16),
+                      _buildDescription(deal),
+                      const SizedBox(height: 16),
+                      _buildVotingSection(deal),
+                      const SizedBox(height: 16),
+                      _buildAffiliateCard(deal),
+                      const SizedBox(height: 8),
+                    ],
+                  ),
+                ),
               ),
+              SliverToBoxAdapter(
+                child: ReviewsSection(deal: deal),
+              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 100)),
+            ],
+          ),
+          Align(
+            alignment: Alignment.center,
+            child: ConfettiWidget(
+              confettiController: _confettiController,
+              blastDirectionality: BlastDirectionality.explosive,
+              shouldLoop: false,
+              colors: const [Colors.green, Colors.blue, Colors.pink, Colors.orange],
             ),
           ),
-          SliverToBoxAdapter(
-            child: ReviewsSection(deal: deal),
-          ),
-          const SliverToBoxAdapter(child: SizedBox(height: 100)),
         ],
       ),
       bottomNavigationBar: _buildBottomBar(deal, currencyFormatter),
@@ -110,6 +140,7 @@ class _DealDetailScreenState extends State<DealDetailScreen> {
       actions: [
         GestureDetector(
           onTap: () {
+            HapticFeedback.lightImpact();
             _userDataService.toggleSave(widget.deal.id);
             setState(() => _isSaved = !_isSaved);
           },
@@ -130,7 +161,9 @@ class _DealDetailScreenState extends State<DealDetailScreen> {
           ),
         ),
         GestureDetector(
-          onTap: () {},
+          onTap: () {
+            HapticFeedback.lightImpact();
+          },
           child: Container(
             margin: const EdgeInsets.only(right: 8, top: 8, bottom: 8),
             decoration: BoxDecoration(
@@ -145,24 +178,28 @@ class _DealDetailScreenState extends State<DealDetailScreen> {
         ),
       ],
       flexibleSpace: FlexibleSpaceBar(
+        collapseMode: CollapseMode.parallax,
         background: Stack(
           fit: StackFit.expand,
           children: [
-            deal.imageUrl.startsWith('assets/')
-                ? Image.asset(
-                    deal.imageUrl,
-                    fit: BoxFit.cover,
-                    width: double.infinity,
-                    height: double.infinity,
-                    errorBuilder: (ctx, err, stack) =>
-                        Container(color: AppColors.surfaceElevated),
-                  )
-                : Image.network(
-                    deal.imageUrl,
-                    fit: BoxFit.cover,
-                    errorBuilder: (ctx, err, stack) =>
-                        Container(color: AppColors.surfaceElevated),
-                  ),
+            Hero(
+              tag: '${widget.heroTagPrefix}deal_image_${deal.id}',
+              child: (deal.imageUrl.startsWith('assets/')
+                  ? Image.asset(
+                      deal.imageUrl,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      height: double.infinity,
+                      errorBuilder: (ctx, err, stack) =>
+                          Container(color: AppColors.surfaceElevated),
+                    )
+                  : Image.network(
+                      deal.imageUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (ctx, err, stack) =>
+                          Container(color: AppColors.surfaceElevated),
+                    )).animate().scale(begin: const Offset(1.1, 1.1), end: const Offset(1, 1), duration: 800.ms, curve: Curves.easeOut),
+            ),
             DecoratedBox(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -302,21 +339,10 @@ class _DealDetailScreenState extends State<DealDetailScreen> {
   Widget _buildCouponSection(String code) {
     return GestureDetector(
       onTap: () {
+        HapticFeedback.lightImpact();
         Clipboard.setData(ClipboardData(text: code));
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.check_circle, color: AppColors.savings, size: 20),
-                const SizedBox(width: 8),
-                Text('Cupom "$code" copiado!'),
-              ],
-            ),
-            backgroundColor: AppColors.surfaceElevated,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          ),
-        );
+        _confettiController.play();
+        AppSnackBar.show(context, 'Cupom "$code" copiado!');
       },
       child: Container(
         padding: const EdgeInsets.all(16),
@@ -426,10 +452,13 @@ class _DealDetailScreenState extends State<DealDetailScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             GestureDetector(
-              onTap: () => setState(() {
-                _hasVotedUp = !_hasVotedUp;
-                _hasVotedUp ? _upvotes++ : _upvotes--;
-              }),
+              onTap: () {
+                HapticFeedback.lightImpact();
+                setState(() {
+                  _hasVotedUp = !_hasVotedUp;
+                  _hasVotedUp ? _upvotes++ : _upvotes--;
+                });
+              },
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -509,29 +538,36 @@ class _DealDetailScreenState extends State<DealDetailScreen> {
           ),
           const SizedBox(width: 16),
           Expanded(
-            child: Container(
-              height: 52,
-              decoration: BoxDecoration(
-                gradient: AppGradients.primaryGradient,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.45),
-                    blurRadius: 16,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: const Center(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.open_in_new_rounded, color: Colors.white, size: 18),
-                    SizedBox(width: 8),
-                    Text('Ir para a loja',
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white)),
+            child: GestureDetector(
+              onTap: () {
+                HapticFeedback.lightImpact();
+                _confettiController.play();
+                // TODO: url_launcher open deal.link
+              },
+              child: Container(
+                height: 52,
+                decoration: BoxDecoration(
+                  gradient: AppGradients.primaryGradient,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.45),
+                      blurRadius: 16,
+                      offset: const Offset(0, 4),
+                    ),
                   ],
+                ),
+                child: const Center(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.open_in_new_rounded, color: Colors.white, size: 18),
+                      SizedBox(width: 8),
+                      Text('Ir para a loja',
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white)),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -560,7 +596,7 @@ class _DealDetailScreenState extends State<DealDetailScreen> {
 
     // Se não encontrar dados, usa o postedBy como nome simples
     final name = affiliate?.name ?? deal.postedBy;
-    final bio = affiliate?.bio ?? 'Afiliado verificado AchadosBR';
+    final bio = affiliate?.bio ?? 'Afiliado verificado AchouAchado';
     final colorHex = affiliate?.themeColorHex ?? '#7C3AED';
     final totalDeals = affiliate?.totalDeals ?? 0;
     final rating = affiliate?.rating ?? 4.5;

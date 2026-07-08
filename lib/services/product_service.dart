@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import '../models/affiliate_product.dart';
+import 'theme_service.dart' show getStorageFile;
 
 class ProductService extends ChangeNotifier {
   static final ProductService _instance = ProductService._internal();
@@ -59,10 +60,7 @@ class ProductService extends ChangeNotifier {
 
   // ─── Persistence ──────────────────────────────────────────────────────────
 
-  Future<File> _getFile() async {
-    final dir = Directory.systemTemp;
-    return File('${dir.path}/achados_products.json');
-  }
+  Future<File> _getFile() async => getStorageFile('achados_products.json');
 
   Future<void> _loadFromDisk() async {
     try {

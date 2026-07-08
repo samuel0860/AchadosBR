@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../app/theme.dart';
+import '../../shared/widgets/empty_state_view.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -120,7 +121,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           ),
         ],
       ),
-      body: ListView.separated(
+      body: _notifications.isEmpty
+          ? EmptyStateView(
+              icon: Icons.notifications_off_rounded,
+              title: 'Nenhum alerta\npor aqui',
+              subtitle: 'Quando seus achados salvos baixarem de preço ou estiverem prestes a expirar, nós te avisaremos.',
+              actionLabel: 'Voltar para Home',
+              onAction: () => Navigator.pop(context),
+            )
+          : ListView.separated(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
         itemCount: _notifications.length,
         separatorBuilder: (context, index) => const SizedBox(height: 8),

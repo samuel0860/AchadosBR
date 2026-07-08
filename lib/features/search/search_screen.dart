@@ -4,6 +4,7 @@ import '../../app/theme.dart';
 import '../../data/mock_deals.dart';
 import '../../models/deal.dart';
 import '../../shared/widgets/deal_card.dart';
+import '../../shared/widgets/filter_bottom_sheet.dart';
 import '../deal_detail/deal_detail_screen.dart';
 
 class SearchScreen extends StatefulWidget {
@@ -23,7 +24,6 @@ class _SearchScreenState extends State<SearchScreen>
   DealCategory? _filterCategory;
   String _sortBy = 'relevance'; // relevance | price_asc | price_desc | discount | hot
   bool _onlyFreeShipping = false;
-  bool _showFilters = false;
 
   // Histórico em memória (simples)
   final List<String> _history = [];
@@ -121,10 +121,6 @@ class _SearchScreenState extends State<SearchScreen>
           // ─── Header com campo de busca ──────────────────────────────────────
           _buildSearchHeader(colors),
 
-          // ─── Filtros expandíveis ────────────────────────────────────────────
-          if (_showFilters && _query.isNotEmpty)
-            _buildFiltersPanel(colors),
-
           // ─── Barra de resultados ────────────────────────────────────────────
           if (_query.isNotEmpty)
             _buildResultsBar(results, colors),
@@ -178,21 +174,31 @@ class _SearchScreenState extends State<SearchScreen>
               const Spacer(),
               if (_query.isNotEmpty)
                 GestureDetector(
-                  onTap: () => setState(() => _showFilters = !_showFilters),
+                  onTap: () async {
+                    final result = await showModalBottomSheet<Map<String, dynamic>>(
+                      context: context,
+                      backgroundColor: Colors.transparent,
+                      isScrollControlled: true,
+                      builder: (context) => FilterBottomSheet(
+                        initialSortBy: _sortBy,
+                        initialCategory: _filterCategory,
+                      ),
+                    );
+                    if (result != null) {
+                      setState(() {
+                        _sortBy = result['sortBy'] as String;
+                        _filterCategory = result['category'] as DealCategory?;
+                      });
+                    }
+                  },
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
                     padding: const EdgeInsets.symmetric(
                         horizontal: 12, vertical: 7),
                     decoration: BoxDecoration(
-                      color: _showFilters
-                          ? AppColors.primary.withValues(alpha: 0.2)
-                          : colors.surfaceElevated,
+                      color: colors.surfaceElevated,
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: _showFilters
-                            ? AppColors.primary.withValues(alpha: 0.5)
-                            : colors.border,
-                      ),
+                      border: Border.all(color: colors.border),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -200,9 +206,7 @@ class _SearchScreenState extends State<SearchScreen>
                         Icon(
                           Icons.tune_rounded,
                           size: 14,
-                          color: _showFilters
-                              ? AppColors.primary
-                              : colors.textSecondary,
+                          color: colors.textSecondary,
                         ),
                         const SizedBox(width: 5),
                         Text(
@@ -210,9 +214,7 @@ class _SearchScreenState extends State<SearchScreen>
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
-                            color: _showFilters
-                                ? AppColors.primary
-                                : colors.textSecondary,
+                            color: colors.textSecondary,
                           ),
                         ),
                         if (_filterCategory != null ||
@@ -287,7 +289,6 @@ class _SearchScreenState extends State<SearchScreen>
                           _searchController.clear();
                           setState(() {
                             _query = '';
-                            _showFilters = false;
                           });
                         },
                         icon: Container(
@@ -313,237 +314,6 @@ class _SearchScreenState extends State<SearchScreen>
         ],
       ),
     );
-  }
-
-  // ─── Filters Panel ──────────────────────────────────────────────────────────
-
-  Widget _buildFiltersPanel(AppThemeColors colors) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      color: colors.surface,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Divider(height: 1, color: colors.border),
-
-          // Ordenação
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
-            child: Text(
-              'ORDENAR POR',
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-                color: colors.textMuted,
-                letterSpacing: 1,
-              ),
-            ),
-          ),
-          SizedBox(
-            height: 38,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              children: [
-                ('relevance', 'Relevância', Icons.auto_awesome_rounded),
-                ('hot', 'Mais Quentes', Icons.local_fire_department_rounded),
-                ('discount', 'Maior Desconto', Icons.sell_rounded),
-                ('price_asc', 'Menor Preço', Icons.arrow_upward_rounded),
-                ('price_desc', 'Maior Preço', Icons.arrow_downward_rounded),
-              ].map((item) {
-                final isSelected = _sortBy == item.$1;
-                return GestureDetector(
-                  onTap: () => setState(() => _sortBy = item.$1),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 150),
-                    margin: const EdgeInsets.only(right: 8),
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? AppColors.primary.withValues(alpha: 0.15)
-                          : colors.surfaceElevated,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: isSelected
-                            ? AppColors.primary.withValues(alpha: 0.5)
-                            : colors.border,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(item.$3,
-                            size: 12,
-                            color: isSelected
-                                ? AppColors.primary
-                                : colors.textSecondary),
-                        const SizedBox(width: 5),
-                        Text(
-                          item.$2,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: isSelected
-                                ? AppColors.primary
-                                : colors.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-          ),
-
-          // Categoria
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
-            child: Text(
-              'CATEGORIA',
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-                color: colors.textMuted,
-                letterSpacing: 1,
-              ),
-            ),
-          ),
-          SizedBox(
-            height: 36,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              children: [
-                // Todos
-                GestureDetector(
-                  onTap: () => setState(() => _filterCategory = null),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 150),
-                    margin: const EdgeInsets.only(right: 8),
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    decoration: BoxDecoration(
-                      color: _filterCategory == null
-                          ? AppColors.primary.withValues(alpha: 0.15)
-                          : colors.surfaceElevated,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: _filterCategory == null
-                            ? AppColors.primary.withValues(alpha: 0.5)
-                            : colors.border,
-                      ),
-                    ),
-                    child: Text(
-                      'Todas',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: _filterCategory == null
-                            ? AppColors.primary
-                            : colors.textSecondary,
-                      ),
-                    ),
-                  ),
-                ),
-                ...DealCategory.values.map((cat) {
-                  final isSelected = _filterCategory == cat;
-                  return GestureDetector(
-                    onTap: () =>
-                        setState(() => _filterCategory = cat),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 150),
-                      margin: const EdgeInsets.only(right: 8),
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? AppColors.primary.withValues(alpha: 0.15)
-                            : colors.surfaceElevated,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: isSelected
-                              ? AppColors.primary.withValues(alpha: 0.5)
-                              : colors.border,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            cat.icon,
-                            size: 14,
-                            color: isSelected
-                                ? AppColors.primary
-                                : colors.textSecondary,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            cat.label,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: isSelected
-                                  ? AppColors.primary
-                                  : colors.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }),
-              ],
-            ),
-          ),
-
-          // Frete grátis
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-            child: GestureDetector(
-              onTap: () =>
-                  setState(() => _onlyFreeShipping = !_onlyFreeShipping),
-              child: Row(
-                children: [
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    width: 22,
-                    height: 22,
-                    decoration: BoxDecoration(
-                      color: _onlyFreeShipping
-                          ? AppColors.primary
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(
-                        color: _onlyFreeShipping
-                            ? AppColors.primary
-                            : colors.borderLight,
-                        width: 2,
-                      ),
-                    ),
-                    child: _onlyFreeShipping
-                        ? const Icon(Icons.check_rounded,
-                            color: Colors.white, size: 14)
-                        : null,
-                  ),
-                  const SizedBox(width: 10),
-                  Icon(Icons.local_shipping_rounded,
-                      size: 16, color: AppColors.savings),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Somente com Frete Grátis',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: colors.textPrimary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          Divider(height: 1, color: colors.border),
-        ],
-      ),
-    ).animate().fadeIn(duration: 200.ms).slideY(begin: -0.05, end: 0);
   }
 
   // ─── Results Bar ────────────────────────────────────────────────────────────
@@ -623,6 +393,7 @@ class _SearchScreenState extends State<SearchScreen>
           padding: const EdgeInsets.only(bottom: 12),
           child: DealCard(
             deal: deal,
+            heroTagPrefix: 'search_',
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(

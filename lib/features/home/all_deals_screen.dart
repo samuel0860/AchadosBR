@@ -4,6 +4,8 @@ import '../../app/theme.dart';
 import '../../data/mock_deals.dart';
 import '../../models/deal.dart';
 import '../../shared/widgets/deal_card.dart';
+import '../../shared/widgets/deal_card_skeleton.dart';
+import '../../shared/widgets/filter_bottom_sheet.dart';
 import '../deal_detail/deal_detail_screen.dart';
 
 class AllDealsScreen extends StatefulWidget {
@@ -16,6 +18,20 @@ class AllDealsScreen extends StatefulWidget {
 class _AllDealsScreenState extends State<AllDealsScreen> {
   DealCategory? _selectedCategory;
   String _sortBy = 'hot';
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _simulateLoading();
+  }
+
+  void _simulateLoading() {
+    setState(() => _isLoading = true);
+    Future.delayed(const Duration(milliseconds: 1000), () {
+      if (mounted) setState(() => _isLoading = false);
+    });
+  }
 
   List<Deal> get filteredDeals {
     var deals = mockDeals.where((d) {
@@ -44,7 +60,7 @@ class _AllDealsScreenState extends State<AllDealsScreen> {
       backgroundColor: colors.background,
       appBar: AppBar(
         title: Text(
-          'Todos os Achados',
+          'Todos os AchouAchados',
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w800,
@@ -61,146 +77,6 @@ class _AllDealsScreenState extends State<AllDealsScreen> {
       ),
       body: Column(
         children: [
-          // ─── Filtros ────────────────────────────────────────────────────────
-          Container(
-            color: colors.appBarBackground,
-            child: Column(
-              children: [
-                // Sort tabs
-                SizedBox(
-                  height: 48,
-                  child: ListView(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    children: [
-                      ('hot', Icons.local_fire_department_rounded, 'Mais Quentes'),
-                      ('new', Icons.auto_awesome_rounded, 'Mais Novos'),
-                      ('discount', Icons.sell_rounded, 'Maior Desconto'),
-                    ].map((tab) {
-                      final isSelected = _sortBy == tab.$1;
-                      return GestureDetector(
-                        onTap: () => setState(() => _sortBy = tab.$1),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          margin: const EdgeInsets.only(right: 8),
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                          decoration: BoxDecoration(
-                            gradient: isSelected ? AppGradients.primaryGradient : null,
-                            color: isSelected ? null : colors.surfaceElevated,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: isSelected ? Colors.transparent : colors.border,
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(tab.$2,
-                                  size: 13,
-                                  color: isSelected ? Colors.white : colors.textSecondary),
-                              const SizedBox(width: 5),
-                              Text(
-                                tab.$3,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                  color: isSelected ? Colors.white : colors.textSecondary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ),
-                // Category chips
-                SizedBox(
-                  height: 44,
-                  child: ListView(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                    children: [
-                      // "Todos"
-                      GestureDetector(
-                        onTap: () => setState(() => _selectedCategory = null),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          margin: const EdgeInsets.only(right: 8),
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: _selectedCategory == null
-                                ? AppColors.primary.withValues(alpha: 0.2)
-                                : colors.surfaceElevated,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: _selectedCategory == null
-                                  ? AppColors.primary.withValues(alpha: 0.5)
-                                  : colors.border,
-                            ),
-                          ),
-                          child: Text(
-                            'Todos',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: _selectedCategory == null
-                                  ? AppColors.primary
-                                  : colors.textSecondary,
-                            ),
-                          ),
-                        ),
-                      ),
-                      ...DealCategory.values.map((cat) {
-                        final isSelected = _selectedCategory == cat;
-                        return GestureDetector(
-                          onTap: () => setState(() => _selectedCategory = cat),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            margin: const EdgeInsets.only(right: 8),
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? AppColors.primary.withValues(alpha: 0.2)
-                                  : colors.surfaceElevated,
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: isSelected
-                                    ? AppColors.primary.withValues(alpha: 0.5)
-                                    : colors.border,
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  cat.icon,
-                                  size: 14,
-                                  color: isSelected ? Colors.white : colors.textSecondary,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  cat.label,
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: isSelected ? Colors.white : colors.textSecondary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      }),
-                    ],
-                  ),
-                ),
-                Divider(height: 1, color: colors.border),
-              ],
-            ),
-          ),
-
-          // ─── Lista ──────────────────────────────────────────────────────────
           Expanded(
             child: filteredDeals.isEmpty
                 ? Center(
@@ -217,29 +93,57 @@ class _AllDealsScreenState extends State<AllDealsScreen> {
                     ),
                   )
                 : ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
-                    itemCount: filteredDeals.length,
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
+                    itemCount: _isLoading ? 4 : filteredDeals.length,
                     itemBuilder: (context, index) {
+                      if (_isLoading) {
+                        return const DealCardSkeleton();
+                      }
                       final deal = filteredDeals[index];
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: DealCard(
-                          deal: deal,
-                          onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => DealDetailScreen(deal: deal),
+                      return DealCard(
+                        deal: deal,
+                        heroTagPrefix: 'all_deals_',
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => DealDetailScreen(
+                              deal: deal,
+                              heroTagPrefix: 'all_deals_',
                             ),
                           ),
-                        )
-                            .animate(delay: Duration(milliseconds: index * 50))
-                            .fadeIn(duration: 300.ms)
-                            .slideY(begin: 0.05, end: 0),
-                      );
+                        ),
+                      )
+                          .animate(delay: Duration(milliseconds: index * 50))
+                          .fadeIn(duration: 300.ms)
+                          .slideY(begin: 0.05, end: 0);
                     },
                   ),
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () async {
+          final result = await showModalBottomSheet<Map<String, dynamic>>(
+            context: context,
+            backgroundColor: Colors.transparent,
+            isScrollControlled: true,
+            builder: (context) => FilterBottomSheet(
+              initialSortBy: _sortBy,
+              initialCategory: _selectedCategory,
+            ),
+          );
+
+          if (result != null) {
+            setState(() {
+              _sortBy = result['sortBy'] as String;
+              _selectedCategory = result['category'] as DealCategory?;
+              _simulateLoading();
+            });
+          }
+        },
+        backgroundColor: AppColors.primary,
+        icon: const Icon(Icons.filter_list_rounded, color: Colors.white),
+        label: const Text('Filtros', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
       ),
     );
   }

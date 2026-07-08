@@ -2,28 +2,11 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import '../models/user_model.dart';
+import 'theme_service.dart' show getStorageFile;
 
 export '../models/user_model.dart';
 
 enum AuthStatus { idle, loading, authenticated, unauthenticated }
-
-/// In-memory store that survives hot restarts and can be persisted to a file
-class _MemoryStore {
-  static Map<String, dynamic> _data = {};
-
-  static void set(String key, dynamic value) => _data[key] = value;
-  static dynamic get(String key) => _data[key];
-  static void remove(String key) => _data.remove(key);
-
-  static Map<String, dynamic> users() =>
-      (_data['users'] as Map<String, dynamic>?) ?? {};
-
-  static void setUser(String email, Map<String, dynamic> userData) {
-    final u = Map<String, dynamic>.from(users());
-    u[email] = userData;
-    _data['users'] = u;
-  }
-}
 
 class AuthService extends ChangeNotifier {
   AuthStatus _status = AuthStatus.idle;
@@ -36,38 +19,26 @@ class AuthService extends ChangeNotifier {
   bool get isLoggedIn => _status == AuthStatus.authenticated;
   bool get isAffiliate => _currentUser?.isAffiliateUser ?? false;
 
-  // ─── Persistent file storage ───────────────────────────────────────────────
+  // ─── File-based persistence ────────────────────────────────────────────────
 
-  static String? _storageDir;
+  Future<File> _getFile() => getStorageFile('achados_auth.json');
 
-  static Future<String> _getStoragePath() async {
-    if (_storageDir != null) return '$_storageDir/achados_auth.json';
+  Future<Map<String, dynamic>> _load() async {
     try {
-      final dir = Directory.systemTemp;
-      _storageDir = dir.path;
-      return '${dir.path}/achados_auth.json';
-    } catch (_) {
-      return '/tmp/achados_auth.json';
-    }
-  }
-
-  Future<void> _loadFromDisk() async {
-    try {
-      final path = await _getStoragePath();
-      final file = File(path);
+      final file = await _getFile();
       if (await file.exists()) {
         final content = await file.readAsString();
-        final data = jsonDecode(content) as Map<String, dynamic>;
-        _MemoryStore._data = Map<String, dynamic>.from(data);
+        return Map<String, dynamic>.from(
+            jsonDecode(content) as Map<String, dynamic>);
       }
     } catch (_) {}
+    return {};
   }
 
-  Future<void> _saveToDisk() async {
+  Future<void> _save(Map<String, dynamic> data) async {
     try {
-      final path = await _getStoragePath();
-      final file = File(path);
-      await file.writeAsString(jsonEncode(_MemoryStore._data));
+      final file = await _getFile();
+      await file.writeAsString(jsonEncode(data));
     } catch (_) {}
   }
 
@@ -77,15 +48,18 @@ class AuthService extends ChangeNotifier {
     _status = AuthStatus.loading;
     notifyListeners();
 
-    await _loadFromDisk();
+    var data = await _load();
 
-    // ── Seed test accounts (sempre atualiza para garantir tipos corretos) ────
-    _MemoryStore.setUser('teste@achadosbr.com', {
+    // ── Seed test accounts ──────────────────────────────────────────────────
+    final users = Map<String, dynamic>.from(
+        (data['users'] as Map<String, dynamic>?) ?? {});
+
+    users['teste@AchouAchado.com'] = {
       'password': '123456',
       'profile': UserModel(
         id: 'test-cliente-001',
         name: 'Usuário Teste',
-        email: 'teste@achadosbr.com',
+        email: 'teste@AchouAchado.com',
         isEmailVerified: true,
         isAffiliate: false,
         userType: UserType.cliente,
@@ -93,14 +67,14 @@ class AuthService extends ChangeNotifier {
         bio: 'Amo encontrar as melhores ofertas!',
         avatarColor: '#10B981',
       ).toJson(),
-    });
+    };
 
-    _MemoryStore.setUser('afiliado@achadosbr.com', {
+    users['afiliado@AchouAchado.com'] = {
       'password': '123456',
       'profile': UserModel(
         id: 'test-afiliado-001',
         name: 'Afiliado Teste',
-        email: 'afiliado@achadosbr.com',
+        email: 'afiliado@AchouAchado.com',
         isEmailVerified: true,
         isAffiliate: true,
         userType: UserType.afiliado,
@@ -108,15 +82,19 @@ class AuthService extends ChangeNotifier {
         bio: 'Especialista em encontrar os melhores preços do Brasil.',
         avatarColor: '#D4AF37',
       ).toJson(),
-    });
+    };
+
+    data['users'] = users;
+    await _save(data);
     // ─────────────────────────────────────────────────────────────────────────
 
-    final isLoggedIn = _MemoryStore.get('isLoggedIn') == true;
-    final userJson = _MemoryStore.get('currentUser');
+    final isLoggedIn = data['isLoggedIn'] == true;
+    final userJson = data['currentUser'];
 
     if (isLoggedIn && userJson != null) {
       try {
-        _currentUser = UserModel.fromJson(userJson as Map<String, dynamic>);
+        _currentUser =
+            UserModel.fromJson(userJson as Map<String, dynamic>);
         _status = AuthStatus.authenticated;
       } catch (_) {
         _status = AuthStatus.unauthenticated;
@@ -135,7 +113,9 @@ class AuthService extends ChangeNotifier {
 
     await Future.delayed(const Duration(milliseconds: 1200));
 
-    final users = _MemoryStore.users();
+    final data = await _load();
+    final users = Map<String, dynamic>.from(
+        (data['users'] as Map<String, dynamic>?) ?? {});
 
     if (!users.containsKey(email)) {
       _errorMessage = 'E-mail não cadastrado. Faça o cadastro primeiro.';
@@ -152,10 +132,11 @@ class AuthService extends ChangeNotifier {
       return false;
     }
 
-    _currentUser = UserModel.fromJson(entry['profile'] as Map<String, dynamic>);
-    _MemoryStore.set('isLoggedIn', true);
-    _MemoryStore.set('currentUser', _currentUser!.toJson());
-    await _saveToDisk();
+    _currentUser =
+        UserModel.fromJson(entry['profile'] as Map<String, dynamic>);
+    data['isLoggedIn'] = true;
+    data['currentUser'] = _currentUser!.toJson();
+    await _save(data);
 
     _status = AuthStatus.authenticated;
     notifyListeners();
@@ -170,7 +151,10 @@ class AuthService extends ChangeNotifier {
 
     await Future.delayed(const Duration(milliseconds: 1500));
 
-    final users = _MemoryStore.users();
+    final data = await _load();
+    final users = Map<String, dynamic>.from(
+        (data['users'] as Map<String, dynamic>?) ?? {});
+
     if (users.containsKey(email)) {
       _errorMessage = 'Este e-mail já está cadastrado.';
       _status = AuthStatus.unauthenticated;
@@ -190,13 +174,14 @@ class AuthService extends ChangeNotifier {
       avatarColor: '#7C3AED',
     );
 
-    _MemoryStore.setUser(email, {
+    users[email] = {
       'password': password,
       'profile': _currentUser!.toJson(),
-    });
-    _MemoryStore.set('isLoggedIn', true);
-    _MemoryStore.set('currentUser', _currentUser!.toJson());
-    await _saveToDisk();
+    };
+    data['users'] = users;
+    data['isLoggedIn'] = true;
+    data['currentUser'] = _currentUser!.toJson();
+    await _save(data);
 
     _status = AuthStatus.authenticated;
     notifyListeners();
@@ -205,17 +190,23 @@ class AuthService extends ChangeNotifier {
 
   Future<bool> forgotPassword(String email) async {
     await Future.delayed(const Duration(milliseconds: 1200));
-    return _MemoryStore.users().containsKey(email);
+    final data = await _load();
+    final users = (data['users'] as Map<String, dynamic>?) ?? {};
+    return users.containsKey(email);
   }
 
   Future<bool> resetPassword(String email, String newPassword) async {
     await Future.delayed(const Duration(milliseconds: 1000));
-    final users = _MemoryStore.users();
+    final data = await _load();
+    final users = Map<String, dynamic>.from(
+        (data['users'] as Map<String, dynamic>?) ?? {});
     if (users.containsKey(email)) {
-      final entry = Map<String, dynamic>.from(users[email] as Map<String, dynamic>);
+      final entry =
+          Map<String, dynamic>.from(users[email] as Map<String, dynamic>);
       entry['password'] = newPassword;
-      _MemoryStore.setUser(email, entry);
-      await _saveToDisk();
+      users[email] = entry;
+      data['users'] = users;
+      await _save(data);
     }
     return true;
   }
@@ -226,30 +217,38 @@ class AuthService extends ChangeNotifier {
     String? avatarColor,
   }) async {
     final email = _currentUser?.email ?? '';
-    final users = _MemoryStore.users();
+    final data = await _load();
+    final users = Map<String, dynamic>.from(
+        (data['users'] as Map<String, dynamic>?) ?? {});
+
     if (users.containsKey(email)) {
-      final entry = Map<String, dynamic>.from(users[email] as Map<String, dynamic>);
-      final profile = Map<String, dynamic>.from(entry['profile'] as Map<String, dynamic>);
+      final entry =
+          Map<String, dynamic>.from(users[email] as Map<String, dynamic>);
+      final profile =
+          Map<String, dynamic>.from(entry['profile'] as Map<String, dynamic>);
       if (name != null) profile['name'] = name;
       if (bio != null) profile['bio'] = bio;
       if (avatarColor != null) profile['avatarColor'] = avatarColor;
       entry['profile'] = profile;
-      _MemoryStore.setUser(email, entry);
+      users[email] = entry;
+      data['users'] = users;
     }
+
     _currentUser = _currentUser?.copyWith(
       name: name,
       bio: bio,
       avatarColor: avatarColor,
     );
-    _MemoryStore.set('currentUser', _currentUser!.toJson());
-    await _saveToDisk();
+    data['currentUser'] = _currentUser!.toJson();
+    await _save(data);
     notifyListeners();
   }
 
   Future<void> logout() async {
-    _MemoryStore.set('isLoggedIn', false);
-    _MemoryStore.remove('currentUser');
-    await _saveToDisk();
+    final data = await _load();
+    data['isLoggedIn'] = false;
+    data.remove('currentUser');
+    await _save(data);
     _currentUser = null;
     _status = AuthStatus.unauthenticated;
     notifyListeners();

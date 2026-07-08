@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'theme_service.dart' show getStorageFile;
 
 /// Serviço de armazenamento local para dados do usuário (salvos, histórico, alertas)
 class UserDataService {
@@ -65,8 +66,7 @@ class UserDataService {
 
   // ─── Persistence ──────────────────────────────────────────────────────────
 
-  Future<File> _getFile() async =>
-      File('${Directory.systemTemp.path}/achados_userdata.json');
+  Future<File> _getFile() async => getStorageFile('achados_userdata.json');
 
   Future<void> _loadFromDisk() async {
     try {

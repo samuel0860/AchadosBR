@@ -8,8 +8,10 @@ import 'services/theme_service.dart';
 import 'services/review_service.dart';
 import 'services/product_service.dart';
 import 'services/user_data_service.dart';
+import 'services/app_config_service.dart';
 import 'shared/widgets/main_scaffold.dart';
 import 'shared/widgets/affiliate_scaffold.dart';
+import 'features/auth/onboarding_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -39,6 +41,7 @@ void main() async {
   final reviewService = ReviewService();
   final productService = ProductService();
   final userDataService = UserDataService();
+  final appConfigService = AppConfigService();
 
   await Future.wait([
     authService.init(),
@@ -46,19 +49,20 @@ void main() async {
     reviewService.init(),
     productService.init(),
     userDataService.init(),
+    appConfigService.init(),
   ]);
 
-  runApp(AchadosBRApp(
+  runApp(AchouAchadoApp(
     authService: authService,
     themeService: themeService,
   ));
 }
 
-class AchadosBRApp extends StatelessWidget {
+class AchouAchadoApp extends StatelessWidget {
   final AuthService authService;
   final ThemeService themeService;
 
-  const AchadosBRApp({
+  const AchouAchadoApp({
     super.key,
     required this.authService,
     required this.themeService,
@@ -80,7 +84,7 @@ class AchadosBRApp extends StatelessWidget {
         }
 
         return MaterialApp(
-          title: 'AchadosBR',
+          title: 'AchouAchado',
           debugShowCheckedModeBanner: false,
           theme: appThemeLight(),
           darkTheme: appTheme(),
@@ -103,6 +107,9 @@ class _AuthGate extends StatelessWidget {
       listenable: authService,
       builder: (context, _) {
         if (!authService.isLoggedIn) {
+          if (!AppConfigService().hasSeenOnboarding) {
+            return const OnboardingScreen();
+          }
           return const LoginScreen();
         }
         // Rota diferente para Afiliado e Cliente

@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../app/theme.dart';
 import '../../data/mock_deals.dart';
 import '../../services/user_data_service.dart';
+import '../../shared/widgets/empty_state_view.dart';
 import '../deal_detail/deal_detail_screen.dart';
 
 class SavedDealsScreen extends StatefulWidget {
@@ -41,23 +42,12 @@ class _SavedDealsScreenState extends State<SavedDealsScreen> {
   }
 
   Widget _buildEmpty() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.bookmark_outline_rounded,
-              size: 72, color: AppColors.textMuted),
-          const SizedBox(height: 16),
-          const Text('Nenhum item salvo',
-              style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textSecondary)),
-          const SizedBox(height: 8),
-          const Text('Salve achados para encontrá-los aqui',
-              style: TextStyle(color: AppColors.textMuted)),
-        ],
-      ),
+    return EmptyStateView(
+      icon: Icons.bookmark_outline_rounded,
+      title: 'Nenhum achado\nsalvo ainda',
+      subtitle: 'Navegue pelas ofertas e toque no ícone de salvar para guardar seus descontos favoritos aqui.',
+      actionLabel: 'Explorar Ofertas',
+      onAction: () => Navigator.pop(context),
     );
   }
 

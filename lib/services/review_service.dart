@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import '../models/review.dart';
+import 'theme_service.dart' show getStorageFile;
 
 class ReviewService extends ChangeNotifier {
   static final ReviewService _instance = ReviewService._internal();
@@ -123,10 +124,7 @@ class ReviewService extends ChangeNotifier {
 
   // ─── Persistence ──────────────────────────────────────────────────────────
 
-  Future<File> _getFile() async {
-    final dir = Directory.systemTemp;
-    return File('${dir.path}/achados_reviews.json');
-  }
+  Future<File> _getFile() async => getStorageFile('achados_reviews.json');
 
   Future<void> _loadFromDisk() async {
     try {

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import '../../app/theme.dart';
 import '../../models/deal.dart';
@@ -9,8 +10,14 @@ import '../../features/deal_detail/deal_detail_screen.dart';
 class DealCard extends StatefulWidget {
   final Deal deal;
   final VoidCallback? onTap;
+  final String heroTagPrefix;
 
-  const DealCard({super.key, required this.deal, this.onTap});
+  const DealCard({
+    super.key,
+    required this.deal,
+    this.onTap,
+    this.heroTagPrefix = '',
+  });
 
   @override
   State<DealCard> createState() => _DealCardState();
@@ -37,9 +44,12 @@ class _DealCardState extends State<DealCard> {
     );
 
     return GestureDetector(
-      onTap: () => Navigator.push(
+      onTap: widget.onTap ?? () => Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => DealDetailScreen(deal: deal)),
+        MaterialPageRoute(builder: (_) => DealDetailScreen(
+          deal: deal,
+          heroTagPrefix: widget.heroTagPrefix,
+        )),
       ),
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
@@ -104,11 +114,13 @@ class _DealCardState extends State<DealCard> {
       children: [
         SizedBox(
           width: 120,
-          child: ClipRRect(
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(16),
-              bottomLeft: Radius.circular(16),
-            ),
+          child: Hero(
+            tag: '${widget.heroTagPrefix}deal_image_${deal.id}',
+            child: ClipRRect(
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(16),
+                bottomLeft: Radius.circular(16),
+              ),
             child: deal.imageUrl.startsWith('assets/')
                 ? Image.asset(
                     deal.imageUrl,
@@ -134,6 +146,7 @@ class _DealCardState extends State<DealCard> {
                     errorBuilder: (context, url, error) =>
                         _buildImageFallback(deal),
                   ),
+            ),
           ),
         ),
         // Discount badge overlay
@@ -332,16 +345,19 @@ class _DealCardState extends State<DealCard> {
       children: [
         // Botão de upvote
         GestureDetector(
-          onTap: () => setState(() {
-            if (_hasVotedUp) {
-              _hasVotedUp = false;
-              _upvotes--;
-            } else {
-              _hasVotedUp = true;
-              _upvotes++;
-              if (_hasVotedDown) _hasVotedDown = false;
-            }
-          }),
+          onTap: () {
+            HapticFeedback.lightImpact();
+            setState(() {
+              if (_hasVotedUp) {
+                _hasVotedUp = false;
+                _upvotes--;
+              } else {
+                _hasVotedUp = true;
+                _upvotes++;
+                if (_hasVotedDown) _hasVotedDown = false;
+              }
+            });
+          },
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),

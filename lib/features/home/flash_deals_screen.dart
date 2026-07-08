@@ -128,10 +128,14 @@ class FlashDealsScreen extends StatelessWidget {
                       children: [
                         DealCard(
                           deal: deal,
+                          heroTagPrefix: 'flash_',
                           onTap: () => Navigator.push(
                             context,
                             MaterialPageRoute(
-                                builder: (_) => DealDetailScreen(deal: deal)),
+                                builder: (_) => DealDetailScreen(
+                                  deal: deal,
+                                  heroTagPrefix: 'flash_',
+                                )),
                           ),
                         ),
                         // Badge de boost
