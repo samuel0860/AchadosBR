@@ -35,7 +35,8 @@ class _AffiliatePageScreenState extends State<AffiliatePageScreen>
   final _productService = ProductService();
 
   AffiliatePageModel? _page;
-  List<AffiliateProduct> _affiliateProducts = []; // produtos cadastrados pelo afiliado
+  List<AffiliateProduct> _affiliateProducts =
+      []; // produtos cadastrados pelo afiliado
   List<Deal> _deals = []; // deals publicados pelo afiliado nos mockDeals
   MockAffiliate? _mockData;
   bool _loading = true;
@@ -75,7 +76,8 @@ class _AffiliatePageScreenState extends State<AffiliatePageScreen>
 
   Future<void> _load() async {
     // Carrega dados mock do afiliado
-    final mockData = findAffiliateById(widget.affiliateId) ??
+    final mockData =
+        findAffiliateById(widget.affiliateId) ??
         findAffiliateByName(widget.affiliateName);
 
     // Carrega configurações da página (bio, cor salva)
@@ -86,16 +88,18 @@ class _AffiliatePageScreenState extends State<AffiliatePageScreen>
 
     // Carrega produtos cadastrados pelo afiliado
     await _productService.init();
-    final affiliateProds =
-        _productService.getActiveByAffiliate(widget.affiliateId);
+    final affiliateProds = _productService.getActiveByAffiliate(
+      widget.affiliateId,
+    );
 
     // Carrega deals publicados pelo afiliado nos mockDeals
     final deals = mockDeals
-        .where((d) =>
-            d.affiliateId == widget.affiliateId ||
-            (mockData != null &&
-                d.postedBy.toLowerCase() ==
-                    mockData.name.toLowerCase()))
+        .where(
+          (d) =>
+              d.affiliateId == widget.affiliateId ||
+              (mockData != null &&
+                  d.postedBy.toLowerCase() == mockData.name.toLowerCase()),
+        )
         .toList();
 
     if (mounted) {
@@ -104,9 +108,7 @@ class _AffiliatePageScreenState extends State<AffiliatePageScreen>
         _page = page;
         _affiliateProducts = affiliateProds;
         _deals = deals;
-        _bioCtrl.text = page.bio.isNotEmpty
-            ? page.bio
-            : (mockData?.bio ?? '');
+        _bioCtrl.text = page.bio.isNotEmpty ? page.bio : (mockData?.bio ?? '');
         _editColorHex = page.themeColorHex != '#7C3AED'
             ? page.themeColorHex
             : (mockData?.themeColorHex ?? '#7C3AED');
@@ -128,9 +130,7 @@ class _AffiliatePageScreenState extends State<AffiliatePageScreen>
       _mockData?.name ?? _page?.displayName ?? widget.affiliateName;
 
   String get _bio =>
-      _bioCtrl.text.isNotEmpty
-          ? _bioCtrl.text
-          : (_mockData?.bio ?? '');
+      _bioCtrl.text.isNotEmpty ? _bioCtrl.text : (_mockData?.bio ?? '');
 
   Future<void> _saveEdits() async {
     if (_page == null) return;
@@ -161,28 +161,27 @@ class _AffiliatePageScreenState extends State<AffiliatePageScreen>
     return Scaffold(
       backgroundColor: colors.background,
       body: _loading
-          ? Center(
-              child: CircularProgressIndicator(color: themeColor),
-            )
+          ? Center(child: CircularProgressIndicator(color: themeColor))
           : NestedScrollView(
               headerSliverBuilder: (context, innerBoxIsScrolled) => [
-                SliverToBoxAdapter(
-                    child: _buildHeader(themeColor, colors)),
+                SliverToBoxAdapter(child: _buildHeader(themeColor, colors)),
                 if (_bio.isNotEmpty)
                   SliverToBoxAdapter(child: _buildBio(colors, themeColor)),
                 if (widget.isOwner)
                   SliverToBoxAdapter(
-                      child: _buildOwnerPanel(themeColor, colors)),
-                SliverToBoxAdapter(
-                  child: _buildTabBar(themeColor, colors),
-                ),
+                    child: _buildOwnerPanel(themeColor, colors),
+                  ),
+                SliverToBoxAdapter(child: _buildTabBar(themeColor, colors)),
               ],
-              body: TabBarView(
-                controller: _tabController,
-                children: [
-                  _buildDealsTab(colors, themeColor),
-                  _buildProductsTab(colors, themeColor),
-                ],
+              body: SafeArea(
+                bottom: false,
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _buildDealsTab(colors, themeColor),
+                    _buildProductsTab(colors, themeColor),
+                  ],
+                ),
               ),
             ),
     );
@@ -199,8 +198,7 @@ class _AffiliatePageScreenState extends State<AffiliatePageScreen>
         unselectedLabelColor: colors.textMuted,
         indicatorColor: themeColor,
         indicatorWeight: 3,
-        labelStyle:
-            const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+        labelStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
         tabs: [
           Tab(
             child: Row(
@@ -241,28 +239,29 @@ class _AffiliatePageScreenState extends State<AffiliatePageScreen>
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 40),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 140),
       itemCount: _deals.length,
       itemBuilder: (context, index) {
         final deal = _deals[index];
         return Padding(
           padding: const EdgeInsets.only(bottom: 12),
-          child: DealCard(
-            deal: deal,
-            heroTagPrefix: 'affiliate_page_',
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => DealDetailScreen(
-                  deal: deal,
-                  heroTagPrefix: 'affiliate_page_',
-                ),
-              ),
-            ),
-          )
-              .animate(delay: Duration(milliseconds: index * 50))
-              .fadeIn(duration: 300.ms)
-              .slideY(begin: 0.05, end: 0),
+          child:
+              DealCard(
+                    deal: deal,
+                    heroTagPrefix: 'affiliate_page_',
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => DealDetailScreen(
+                          deal: deal,
+                          heroTagPrefix: 'affiliate_page_',
+                        ),
+                      ),
+                    ),
+                  )
+                  .animate(delay: Duration(milliseconds: index * 50))
+                  .fadeIn(duration: 300.ms)
+                  .slideY(begin: 0.05, end: 0),
         );
       },
     );
@@ -284,7 +283,7 @@ class _AffiliatePageScreenState extends State<AffiliatePageScreen>
     }
 
     return GridView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 40),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 140),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
         mainAxisSpacing: 12,
@@ -346,139 +345,181 @@ class _AffiliatePageScreenState extends State<AffiliatePageScreen>
 
     return Container(
       padding: EdgeInsets.fromLTRB(
-          20, MediaQuery.of(context).padding.top + 16, 20, 20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            themeColor.withValues(alpha: 0.3),
-            colors.background,
-          ],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-        ),
+        20,
+        MediaQuery.of(context).padding.top + 16,
+        20,
+        20,
       ),
-      child: Column(
+      decoration: BoxDecoration(
+        color: colors.surface,
+        image: DecorationImage(
+          image: const AssetImage('assets/images/pattern.png'),
+          fit: BoxFit.cover,
+          colorFilter: ColorFilter.mode(
+            colors.background.withValues(alpha: 0.95),
+            BlendMode.darken,
+          ),
+        ),
+        boxShadow: [
+          BoxShadow(color: colors.background, blurRadius: 30, spreadRadius: 10),
+        ],
+      ),
+      child: Stack(
         children: [
-          // Back + editar
-          Row(
-            children: [
-              GestureDetector(
-                onTap: () => Navigator.pop(context),
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: colors.surfaceElevated,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: colors.border),
+          // Efeito de Glow ao fundo
+          Positioned(
+            top: -50,
+            left: -50,
+            right: -50,
+            child: Container(
+              height: 200,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: themeColor.withValues(alpha: 0.15),
+                    blurRadius: 100,
+                    spreadRadius: 50,
                   ),
-                  child: Icon(Icons.arrow_back_rounded,
-                      color: colors.textPrimary, size: 20),
-                ),
+                ],
               ),
-              const Spacer(),
-              if (widget.isOwner)
-                GestureDetector(
-                  onTap: () =>
-                      setState(() => _editMode = !_editMode),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: themeColor.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                          color: themeColor.withValues(alpha: 0.4)),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          _editMode
-                              ? Icons.close_rounded
-                              : Icons.edit_rounded,
-                          color: themeColor,
-                          size: 14,
-                        ),
-                        const SizedBox(width: 5),
-                        Text(
-                          _editMode ? 'Cancelar' : 'Personalizar',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: themeColor,
+            ),
+          ),
+          Column(
+            children: [
+              // Back + editar
+              SafeArea(
+                bottom: false,
+                child: Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: colors.surfaceElevated.withValues(alpha: 0.8),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: colors.border.withValues(alpha: 0.5),
                           ),
                         ),
-                      ],
+                        child: Icon(
+                          Icons.arrow_back_rounded,
+                          color: colors.textPrimary,
+                          size: 20,
+                        ),
+                      ),
+                    ),
+                    const Spacer(),
+                    if (widget.isOwner)
+                      GestureDetector(
+                        onTap: () => setState(() => _editMode = !_editMode),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: themeColor.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: themeColor.withValues(alpha: 0.4),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                _editMode
+                                    ? Icons.close_rounded
+                                    : Icons.edit_rounded,
+                                color: themeColor,
+                                size: 14,
+                              ),
+                              const SizedBox(width: 5),
+                              Text(
+                                _editMode ? 'Cancelar' : 'Personalizar',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: themeColor,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Avatar
+              Container(
+                width: 84,
+                height: 84,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [themeColor, themeColor.withValues(alpha: 0.6)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: themeColor.withValues(alpha: 0.45),
+                      blurRadius: 20,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                  border: Border.all(color: colors.background, width: 3),
+                ),
+                child: Center(
+                  child: Text(
+                    initial,
+                    style: const TextStyle(
+                      fontSize: 34,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
                     ),
                   ),
                 ),
-            ],
-          ),
-          const SizedBox(height: 20),
+              ).animate().scale(duration: 400.ms, curve: Curves.elasticOut),
+              const SizedBox(height: 12),
 
-          // Avatar
-          Container(
-            width: 84,
-            height: 84,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [themeColor, themeColor.withValues(alpha: 0.6)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+              // Nome
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    _displayName,
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                      color: colors.textPrimary,
+                    ),
+                  ),
+                ],
               ),
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: themeColor.withValues(alpha: 0.45),
-                  blurRadius: 20,
-                  offset: const Offset(0, 6),
-                ),
-              ],
-              border: Border.all(color: colors.background, width: 3),
-            ),
-            child: Center(
-              child: Text(
-                initial,
-                style: const TextStyle(
-                  fontSize: 34,
-                  fontWeight: FontWeight.w900,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ).animate().scale(duration: 400.ms, curve: Curves.elasticOut),
-          const SizedBox(height: 12),
+              const SizedBox(height: 6),
 
-          // Nome
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                _displayName,
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w900,
-                  color: colors.textPrimary,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-
-          // Stats
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _statChip(
-                icon: Icons.local_offer_rounded,
-                label: '${_deals.length + (_mockData?.totalDeals ?? 0)} deals',
-                color: themeColor,
-              ),
-              const SizedBox(width: 8),
-              _statChip(
-                icon: Icons.star_rounded,
-                label: '${_mockData?.rating.toStringAsFixed(1) ?? "4.8"}',
-                color: themeColor,
+              // Stats
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _statChip(
+                    icon: Icons.local_offer_rounded,
+                    label:
+                        '${_deals.length + (_mockData?.totalDeals ?? 0)} deals',
+                    color: themeColor,
+                  ),
+                  const SizedBox(width: 8),
+                  _statChip(
+                    icon: Icons.star_rounded,
+                    label: '${_mockData?.rating.toStringAsFixed(1) ?? "4.8"}',
+                    color: themeColor,
+                  ),
+                ],
               ),
             ],
           ),
@@ -487,7 +528,12 @@ class _AffiliatePageScreenState extends State<AffiliatePageScreen>
     );
   }
 
-  Widget _statChip({required IconData icon, required String label, required Color color, Color? textColor}) {
+  Widget _statChip({
+    required IconData icon,
+    required String label,
+    required Color color,
+    Color? textColor,
+  }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
@@ -527,16 +573,16 @@ class _AffiliatePageScreenState extends State<AffiliatePageScreen>
         ),
         child: Row(
           children: [
-            Icon(Icons.format_quote_rounded,
-                color: themeColor, size: 20),
+            Icon(Icons.format_quote_rounded, color: themeColor, size: 20),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
                 _bio,
                 style: TextStyle(
-                    fontSize: 13,
-                    color: colors.textSecondary,
-                    height: 1.4),
+                  fontSize: 13,
+                  color: colors.textSecondary,
+                  height: 1.4,
+                ),
               ),
             ),
           ],
@@ -630,20 +676,30 @@ class _AffiliatePageScreenState extends State<AffiliatePageScreen>
                             ? Border.all(color: Colors.white, width: 3)
                             : null,
                         boxShadow: isSelected
-                            ? [BoxShadow(
-                                color: col.withValues(alpha: 0.6),
-                                blurRadius: 8)]
+                            ? [
+                                BoxShadow(
+                                  color: col.withValues(alpha: 0.6),
+                                  blurRadius: 8,
+                                ),
+                              ]
                             : null,
                       ),
                       child: isSelected
-                          ? const Icon(Icons.check_rounded,
-                              color: Colors.white, size: 18)
+                          ? const Icon(
+                              Icons.check_rounded,
+                              color: Colors.white,
+                              size: 18,
+                            )
                           : null,
                     ),
                     const SizedBox(height: 3),
-                    Text(label,
-                        style: const TextStyle(
-                            fontSize: 8, color: AppColors.textMuted)),
+                    Text(
+                      label,
+                      style: const TextStyle(
+                        fontSize: 8,
+                        color: AppColors.textMuted,
+                      ),
+                    ),
                   ],
                 ),
               );
@@ -690,7 +746,10 @@ class _AffiliatePageScreenState extends State<AffiliatePageScreen>
   // ─── Product Card ────────────────────────────────────────────────────────────
 
   Widget _buildProductCard(
-      AffiliateProduct product, Color themeColor, AppThemeColors colors) {
+    AffiliateProduct product,
+    Color themeColor,
+    AppThemeColors colors,
+  ) {
     return GestureDetector(
       onTap: () => _showProductSheet(product, themeColor),
       child: Container(
@@ -711,8 +770,9 @@ class _AffiliatePageScreenState extends State<AffiliatePageScreen>
           children: [
             // Imagem
             ClipRRect(
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(15)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(15),
+              ),
               child: AspectRatio(
                 aspectRatio: 1,
                 child: product.imageUrls.isNotEmpty
@@ -721,14 +781,20 @@ class _AffiliatePageScreenState extends State<AffiliatePageScreen>
                         fit: BoxFit.cover,
                         errorBuilder: (_, __, ___) => Container(
                           color: colors.surfaceElevated,
-                          child: Icon(Icons.image_rounded,
-                              color: colors.textMuted, size: 32),
+                          child: Icon(
+                            Icons.image_rounded,
+                            color: colors.textMuted,
+                            size: 32,
+                          ),
                         ),
                       )
                     : Container(
                         color: colors.surfaceElevated,
-                        child: Icon(Icons.image_rounded,
-                            color: colors.textMuted, size: 32),
+                        child: Icon(
+                          Icons.image_rounded,
+                          color: colors.textMuted,
+                          size: 32,
+                        ),
                       ),
               ),
             ),
@@ -763,7 +829,9 @@ class _AffiliatePageScreenState extends State<AffiliatePageScreen>
                       Container(
                         margin: const EdgeInsets.only(top: 3),
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 2),
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
                           color: themeColor.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(6),
@@ -800,8 +868,7 @@ class _AffiliatePageScreenState extends State<AffiliatePageScreen>
         builder: (ctx, scrollCtrl) => Container(
           decoration: BoxDecoration(
             color: colors.surface,
-            borderRadius:
-                const BorderRadius.vertical(top: Radius.circular(24)),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
             border: Border.all(color: colors.border),
           ),
           child: Column(
@@ -823,7 +890,10 @@ class _AffiliatePageScreenState extends State<AffiliatePageScreen>
                   children: [
                     if (product.imageUrls.isNotEmpty)
                       _buildImageCarousel(
-                          product.imageUrls, themeColor, colors),
+                        product.imageUrls,
+                        themeColor,
+                        colors,
+                      ),
                     const SizedBox(height: 16),
                     Text(
                       product.title,
@@ -883,8 +953,7 @@ class _AffiliatePageScreenState extends State<AffiliatePageScreen>
                       },
                       child: Container(
                         width: double.infinity,
-                        padding:
-                            const EdgeInsets.symmetric(vertical: 16),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
                         decoration: BoxDecoration(
                           color: themeColor,
                           borderRadius: BorderRadius.circular(14),
@@ -899,8 +968,11 @@ class _AffiliatePageScreenState extends State<AffiliatePageScreen>
                         child: const Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.link_rounded,
-                                color: Colors.white, size: 20),
+                            Icon(
+                              Icons.link_rounded,
+                              color: Colors.white,
+                              size: 20,
+                            ),
                             SizedBox(width: 8),
                             Text(
                               'Copiar Link de Afiliado',
@@ -926,7 +998,10 @@ class _AffiliatePageScreenState extends State<AffiliatePageScreen>
   }
 
   Widget _buildImageCarousel(
-      List<String> urls, Color themeColor, AppThemeColors colors) {
+    List<String> urls,
+    Color themeColor,
+    AppThemeColors colors,
+  ) {
     if (urls.length == 1) {
       return ClipRRect(
         borderRadius: BorderRadius.circular(14),
@@ -937,8 +1012,11 @@ class _AffiliatePageScreenState extends State<AffiliatePageScreen>
             fit: BoxFit.cover,
             errorBuilder: (_, __, ___) => Container(
               color: colors.surfaceElevated,
-              child:
-                  Icon(Icons.image_rounded, color: colors.textMuted, size: 36),
+              child: Icon(
+                Icons.image_rounded,
+                color: colors.textMuted,
+                size: 36,
+              ),
             ),
           ),
         ),
@@ -947,49 +1025,54 @@ class _AffiliatePageScreenState extends State<AffiliatePageScreen>
 
     final pageCtrl = PageController();
     int currentPage = 0;
-    return StatefulBuilder(builder: (ctx, setS) {
-      return Column(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(14),
-            child: AspectRatio(
-              aspectRatio: 16 / 9,
-              child: PageView.builder(
-                controller: pageCtrl,
-                itemCount: urls.length,
-                onPageChanged: (i) => setS(() => currentPage = i),
-                itemBuilder: (_, i) => Image.asset(
-                  urls[i],
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
-                    color: colors.surfaceElevated,
-                    child: Icon(Icons.image_rounded,
-                        color: colors.textMuted, size: 36),
+    return StatefulBuilder(
+      builder: (ctx, setS) {
+        return Column(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(14),
+              child: AspectRatio(
+                aspectRatio: 16 / 9,
+                child: PageView.builder(
+                  controller: pageCtrl,
+                  itemCount: urls.length,
+                  onPageChanged: (i) => setS(() => currentPage = i),
+                  itemBuilder: (_, i) => Image.asset(
+                    urls[i],
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      color: colors.surfaceElevated,
+                      child: Icon(
+                        Icons.image_rounded,
+                        color: colors.textMuted,
+                        size: 36,
+                      ),
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(
-              urls.length,
-              (i) => AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                margin: const EdgeInsets.symmetric(horizontal: 3),
-                width: i == currentPage ? 16 : 6,
-                height: 6,
-                decoration: BoxDecoration(
-                  color: i == currentPage ? themeColor : colors.border,
-                  borderRadius: BorderRadius.circular(3),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(
+                urls.length,
+                (i) => AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  width: i == currentPage ? 16 : 6,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: i == currentPage ? themeColor : colors.border,
+                    borderRadius: BorderRadius.circular(3),
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
-      );
-    });
+          ],
+        );
+      },
+    );
   }
 
   Color _hexColor(String hex) {

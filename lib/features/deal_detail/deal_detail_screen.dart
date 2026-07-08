@@ -274,10 +274,10 @@ class _DealDetailScreenState extends State<DealDetailScreen> {
   Widget _buildTitle(Deal deal) {
     return Text(
       deal.title,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 20,
         fontWeight: FontWeight.w800,
-        color: AppColors.textPrimary,
+        color: context.appColors.textPrimary,
         height: 1.3,
       ),
     );
