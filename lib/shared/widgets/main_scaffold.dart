@@ -41,8 +41,9 @@ class _MainScaffoldState extends State<MainScaffold> {
 
   Widget _buildBottomNav(BuildContext context) {
     final colors = context.appColors;
-    return Container(
-      margin: const EdgeInsets.only(left: 16, right: 16, bottom: 24),
+    return SafeArea(
+      child: Container(
+        margin: const EdgeInsets.only(left: 16, right: 16, bottom: 24),
       decoration: BoxDecoration(
         color: colors.navBarBackground.withValues(alpha: 0.7),
         borderRadius: BorderRadius.circular(30),
@@ -76,7 +77,7 @@ class _MainScaffoldState extends State<MainScaffold> {
           ),
         ),
       ),
-    ).animate().slideY(begin: 1, duration: 600.ms, curve: Curves.easeOutCubic);
+    )).animate().slideY(begin: 1, duration: 600.ms, curve: Curves.easeOutCubic);
   }
 
   Widget _buildNavItem(IconData icon, String label, int index) {

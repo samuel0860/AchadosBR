@@ -36,12 +36,13 @@ class _AffiliateScaffoldState extends State<AffiliateScaffold> {
         index: _currentIndex,
         children: _screens,
       ),
-      bottomNavigationBar: _buildBottomNav(),
+      bottomNavigationBar: _buildBottomNav(context),
     );
   }
 
-  Widget _buildBottomNav() {
-    return Container(
+  Widget _buildBottomNav(BuildContext context) {
+    return SafeArea(
+      child: Container(
       margin: const EdgeInsets.only(left: 16, right: 16, bottom: 24),
       decoration: BoxDecoration(
         color: const Color(0xFF0D0800).withValues(alpha: 0.75),
@@ -77,7 +78,7 @@ class _AffiliateScaffoldState extends State<AffiliateScaffold> {
           ),
         ),
       ),
-    ).animate().slideY(begin: 1, duration: 600.ms, curve: Curves.easeOutCubic);
+    )).animate().slideY(begin: 1, duration: 600.ms, curve: Curves.easeOutCubic);
   }
 
   Widget _buildNavItem(IconData icon, String label, int index) {
